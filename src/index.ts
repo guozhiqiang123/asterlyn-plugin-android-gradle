@@ -11,6 +11,10 @@ export {
   detectAndroidGradlePluginEvidence,
 } from "./plugin.ts";
 export {
+  ANDROID_GRADLE_COLLECTION_PROVIDER_ID,
+  buildAndroidGradleTaskCollection,
+} from "./collection.ts";
+export {
   ANDROID_GRADLE_DISCOVERY_LIMITS,
   ANDROID_GRADLE_EXECUTION_FLAGS,
   ANDROID_GRADLE_TASK_ARGS,

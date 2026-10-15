@@ -3,6 +3,7 @@ import type {
   SdkPluginActivationContext,
   SdkPluginMatchContext,
   SdkPluginTaskCacheCapability,
+  SdkHierarchicalCollection,
   SdkWorkspaceEvidence,
 } from "@asterlyn/plugin-sdk";
 import {
@@ -25,6 +26,7 @@ import {
 import type { TaskDescriptor, GradleTaskDescriptor, GradleTaskDiscoveryResult, PluginTaskExecutionResult, PluginTaskRefreshPlan, PluginTaskRunPlan } from "./sdk-compat.ts";
 import { withQuickAction } from "./sdk-compat.ts";
 import type { SdkTaskProviderCacheMetadata } from "@asterlyn/plugin-sdk";
+import { buildAndroidGradleTaskCollection } from "./collection.ts";
 
 export const ANDROID_GRADLE_PLUGIN_ID = "dev.asterlyn.android-gradle";
 
@@ -34,6 +36,7 @@ interface AndroidProviderContribution {
   readonly label: string;
   readonly settingsFocus: string;
   readonly snapshot: () => GradleTaskDiscoveryResult;
+  readonly collections: () => readonly SdkHierarchicalCollection[];
   readonly subscribe: (listener: () => void) => { dispose(): void };
   readonly invalidate: (invalidation: { readonly paths: readonly string[]; readonly recovery: "none" | "pathsTruncated" | "rootAmbiguous" | "backendOverflow" }) => void | Promise<void>;
   readonly refresh: () => PluginTaskRefreshPlan | null;
@@ -49,11 +52,11 @@ interface AndroidProviderContribution {
 export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
   sdkMajor: 1,
   id: ANDROID_GRADLE_PLUGIN_ID,
-  version: "0.1.0",
+  version: "0.1.1",
   manifest: Object.freeze({
     sdkMajor: 1,
     id: ANDROID_GRADLE_PLUGIN_ID,
-    version: "0.1.0",
+    version: "0.1.1",
     nameKey: "plugins.androidGradle.name",
     descriptionKey: "plugins.androidGradle.description",
     settings: Object.freeze([{
@@ -110,6 +113,7 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
       label: "Gradle",
       settingsFocus: "taskPresentation",
       snapshot: () => snapshot,
+      collections: () => [buildAndroidGradleTaskCollection(snapshot)],
       subscribe: (listener) => { listeners.add(listener); return { dispose: () => listeners.delete(listener) }; },
       invalidate: (invalidation) => {
         if (!cache || disposed) return;
