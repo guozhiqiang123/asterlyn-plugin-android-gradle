@@ -102,12 +102,17 @@ export function normalizePath(value: string, platform: "posix" | "windows"): str
 }
 
 function isFingerprintCandidate(path: string): boolean {
+  if (isGeneratedProjectPath(path)) return false;
   const base = path.slice(path.lastIndexOf("/") + 1);
   if (["build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat", "AndroidManifest.xml", "androidmanifest.xml", "gradle-wrapper.properties", "libs.versions.toml"].includes(base)) return true;
   if (path.startsWith("gradle/") && base.endsWith(".toml")) return true;
   return path.startsWith("gradle/wrapper/") && base === "gradle-wrapper.properties" ||
     (path.startsWith("buildSrc/") || path.startsWith("buildsrc/") || path.startsWith("build-logic/")) &&
       (/\.(gradle|gradle\.kts|toml|properties|kt|kts|java)$/u.test(base) || /version/i.test(base));
+}
+
+function isGeneratedProjectPath(path: string): boolean {
+  return path.split("/").some((segment) => segment === "build" || segment === ".gradle" || segment === "out");
 }
 
 export function intersectsFingerprintPaths(candidates: readonly string[], changed: readonly string[], platform: "posix" | "windows"): boolean {

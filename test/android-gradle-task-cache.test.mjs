@@ -48,3 +48,19 @@ test("fingerprint catalog is bounded to Gradle and Android configuration paths",
   assert.equal(intersectsFingerprintPaths(paths, ["app/build.gradle"], "posix"), true);
   assert.equal(intersectsFingerprintPaths(paths, ["gradle/new.versions.toml"], "posix"), true);
 });
+
+test("Gradle and Android build outputs never invalidate the task cache", () => {
+  const sourcePaths = ["app/build.gradle.kts", "app/src/main/AndroidManifest.xml", "settings.gradle.kts"];
+  const generatedPaths = [
+    "app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml",
+    "app/build/generated/source/build.gradle.kts",
+    ".gradle/generated-gradle-jars/gradle-api.jar",
+    "out/generated/AndroidManifest.xml",
+  ];
+  assert.deepEqual(fingerprintPaths(
+    [...sourcePaths, ...generatedPaths].map((workspacePath) => ({ workspacePath })),
+    "posix",
+  ), sourcePaths);
+  assert.equal(intersectsFingerprintPaths(sourcePaths, generatedPaths, "posix"), false);
+  assert.equal(intersectsFingerprintPaths(sourcePaths, ["app/build.gradle.kts"], "posix"), true);
+});
