@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -14,7 +14,11 @@
         "settings.taskPresentation.label": "Task presentation",
         "settings.taskPresentation.description": "Choose the task tree shown in the Tasks tool window.",
         "settings.taskPresentation.allTasksTree": "All tasks tree",
-        "settings.taskPresentation.quickActionsTree": "Android quick actions tree"
+        "settings.taskPresentation.quickActionsTree": "Android quick actions tree",
+        "authorization.workspaceTrust.label": "Trust Gradle tasks in this workspace",
+        "authorization.workspaceTrust.description": "Allow this plugin to run reviewed Gradle tasks in the current workspace. Turning this off also clears remembered task confirmations.",
+        "authorization.rememberTask.label": "Do not ask again for this exact Gradle task",
+        "authorization.rememberTask.description": "The approval is limited to this workspace and the current executable and arguments. Changes require confirmation again."
       },
       "zh-CN": {
         "name": "Android / Gradle",
@@ -22,7 +26,11 @@
         "settings.taskPresentation.label": "任务展示方式",
         "settings.taskPresentation.description": "选择任务窗口中显示的任务树。",
         "settings.taskPresentation.allTasksTree": "完整任务树",
-        "settings.taskPresentation.quickActionsTree": "Android 快捷操作树"
+        "settings.taskPresentation.quickActionsTree": "Android 快捷操作树",
+        "authorization.workspaceTrust.label": "信任此工作区中的 Gradle 任务",
+        "authorization.workspaceTrust.description": "允许此插件在当前工作区运行经过审核的 Gradle 任务。关闭后也会清除已记住的任务确认。",
+        "authorization.rememberTask.label": "不再询问这个精确的 Gradle 任务",
+        "authorization.rememberTask.description": "授权仅限当前工作区以及当前可执行文件和参数；发生变化时会重新询问。"
       }
     }
   },
@@ -37,5 +45,16 @@
       { "value": "quick-actions-tree", "labelKey": "settings.taskPresentation.quickActionsTree" }
     ]
   }],
-  "capabilities": ["workspaceCatalog", "tasks", "taskCache"]
+  "taskAuthorization": {
+    "workspaceTrust": {
+      "id": "workspaceTrust",
+      "labelKey": "authorization.workspaceTrust.label",
+      "descriptionKey": "authorization.workspaceTrust.description"
+    },
+    "taskConfirmation": {
+      "rememberLabelKey": "authorization.rememberTask.label",
+      "rememberDescriptionKey": "authorization.rememberTask.description"
+    }
+  },
+  "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization"]
 }

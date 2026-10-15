@@ -9,8 +9,10 @@ Tauri, filesystem, or process bridges. The host retains workspace authority, tas
 execution, cancellation, cache storage, Settings rendering, and Tasks UI.
 
 `manifest.json` is the package's static source of truth. It owns plugin identity, capabilities,
-declarative settings, and plain-text English/Chinese locale catalogs; the executable module reuses
-that manifest rather than maintaining another version or copy table.
+declarative settings, task-authorization presentation policy, and plain-text English/Chinese locale
+catalogs; the executable module reuses that manifest rather than maintaining another version or
+copy table. Asterlyn owns and enforces the native authorization store; this plugin owns only the
+stable authorization IDs and user-facing copy.
 
 Run `npm run verify` before producing an artifact. The checked-in SDK tarball pins the exact
 contract used by clean and offline builds; update it only together with `package-lock.json` and a
