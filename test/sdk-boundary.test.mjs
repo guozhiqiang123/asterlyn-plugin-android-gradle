@@ -10,7 +10,10 @@ test("plugin source imports only its own modules and the published SDK", async (
     assert.doesNotMatch(source, /(?:application|features|models\.ts|protocol|src\/plugins)/u, file);
     for (const match of source.matchAll(/from\s+["']([^"']+)["']/gu)) {
       const specifier = match[1];
-      assert.ok(specifier === "@asterlyn/plugin-sdk" || specifier.startsWith("./"), `${file}: ${specifier}`);
+      assert.ok(
+        specifier === "@asterlyn/plugin-sdk" || specifier.startsWith("./") || specifier === "../manifest.json",
+        `${file}: ${specifier}`,
+      );
     }
   }
 });

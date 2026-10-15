@@ -10,6 +10,7 @@ export {
   ANDROID_GRADLE_PLUGIN_ID,
   detectAndroidGradlePluginEvidence,
 } from "./plugin.ts";
+export { ANDROID_GRADLE_PLUGIN_MANIFEST } from "./manifest.ts";
 export {
   ANDROID_GRADLE_COLLECTION_PROVIDER_ID,
   buildAndroidGradleTaskCollection,

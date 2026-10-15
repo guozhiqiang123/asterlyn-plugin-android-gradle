@@ -2,6 +2,40 @@
   "schemaVersion": 1,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.1.1",
+  "version": "0.1.3",
+  "nameKey": "name",
+  "descriptionKey": "description",
+  "localization": {
+    "defaultLocale": "en-US",
+    "locales": {
+      "en-US": {
+        "name": "Android / Gradle",
+        "description": "Discover and run Gradle tasks for Android projects.",
+        "settings.taskPresentation.label": "Task presentation",
+        "settings.taskPresentation.description": "Choose the task tree shown in the Tasks tool window.",
+        "settings.taskPresentation.allTasksTree": "All tasks tree",
+        "settings.taskPresentation.quickActionsTree": "Android quick actions tree"
+      },
+      "zh-CN": {
+        "name": "Android / Gradle",
+        "description": "为 Android 项目发现并运行 Gradle 任务。",
+        "settings.taskPresentation.label": "任务展示方式",
+        "settings.taskPresentation.description": "选择任务窗口中显示的任务树。",
+        "settings.taskPresentation.allTasksTree": "完整任务树",
+        "settings.taskPresentation.quickActionsTree": "Android 快捷操作树"
+      }
+    }
+  },
+  "settings": [{
+    "id": "taskPresentation",
+    "kind": "enum",
+    "labelKey": "settings.taskPresentation.label",
+    "descriptionKey": "settings.taskPresentation.description",
+    "defaultValue": "all-tasks-tree",
+    "options": [
+      { "value": "all-tasks-tree", "labelKey": "settings.taskPresentation.allTasksTree" },
+      { "value": "quick-actions-tree", "labelKey": "settings.taskPresentation.quickActionsTree" }
+    ]
+  }],
   "capabilities": ["workspaceCatalog", "tasks", "taskCache"]
 }

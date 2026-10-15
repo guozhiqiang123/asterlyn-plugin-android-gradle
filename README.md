@@ -1,11 +1,16 @@
 # Asterlyn Android / Gradle plugin
 
-First-party Android and Gradle integration for Asterlyn. The repository builds a trusted ESM
-artifact that is pinned into the desktop host at build time. It is not a runtime third-party plugin.
+Android and Gradle reference integration for Asterlyn's public plugin foundation. The repository
+currently builds a trusted ESM artifact that is pinned into the desktop host at build time; runtime
+third-party installation remains gated on the host's package-admission and isolation work.
 
 The plugin depends only on `@asterlyn/plugin-sdk`; it does not import Asterlyn host source, DOM,
 Tauri, filesystem, or process bridges. The host retains workspace authority, task review,
 execution, cancellation, cache storage, Settings rendering, and Tasks UI.
+
+`manifest.json` is the package's static source of truth. It owns plugin identity, capabilities,
+declarative settings, and plain-text English/Chinese locale catalogs; the executable module reuses
+that manifest rather than maintaining another version or copy table.
 
 Run `npm run verify` before producing an artifact. The checked-in SDK tarball pins the exact
 contract used by clean and offline builds; update it only together with `package-lock.json` and a

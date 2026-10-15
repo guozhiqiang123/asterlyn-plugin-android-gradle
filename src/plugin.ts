@@ -27,8 +27,9 @@ import type { TaskDescriptor, GradleTaskDescriptor, GradleTaskDiscoveryResult, P
 import { withQuickAction } from "./sdk-compat.ts";
 import type { SdkTaskProviderCacheMetadata } from "@asterlyn/plugin-sdk";
 import { buildAndroidGradleTaskCollection } from "./collection.ts";
+import { ANDROID_GRADLE_PLUGIN_MANIFEST } from "./manifest.ts";
 
-export const ANDROID_GRADLE_PLUGIN_ID = "dev.asterlyn.android-gradle";
+export const ANDROID_GRADLE_PLUGIN_ID = ANDROID_GRADLE_PLUGIN_MANIFEST.id;
 
 interface AndroidProviderContribution {
   readonly kind: "provider";
@@ -50,27 +51,10 @@ interface AndroidProviderContribution {
  * only the host can review, authorize, execute, cancel, and return its bounded result.
  */
 export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
-  sdkMajor: 1,
+  sdkMajor: ANDROID_GRADLE_PLUGIN_MANIFEST.sdkMajor,
   id: ANDROID_GRADLE_PLUGIN_ID,
-  version: "0.1.1",
-  manifest: Object.freeze({
-    sdkMajor: 1,
-    id: ANDROID_GRADLE_PLUGIN_ID,
-    version: "0.1.1",
-    nameKey: "plugins.androidGradle.name",
-    descriptionKey: "plugins.androidGradle.description",
-    settings: Object.freeze([{
-      id: "taskPresentation",
-      kind: "enum",
-      labelKey: "plugins.androidGradle.taskPresentation.label",
-      descriptionKey: "plugins.androidGradle.taskPresentation.description",
-      defaultValue: "all-tasks-tree",
-      options: Object.freeze([
-        { value: "all-tasks-tree", labelKey: "plugins.androidGradle.taskPresentation.allTasksTree" },
-        { value: "quick-actions-tree", labelKey: "plugins.androidGradle.taskPresentation.quickActionsTree" },
-      ]),
-    }] as const),
-  }),
+  version: ANDROID_GRADLE_PLUGIN_MANIFEST.version,
+  manifest: ANDROID_GRADLE_PLUGIN_MANIFEST,
   matches: (context: SdkPluginMatchContext) => detectAndroidGradlePluginEvidence(context)?.android === true,
   evidenceKey: (context: SdkPluginMatchContext) => {
     const evidence = detectAndroidGradlePluginEvidence(context);
