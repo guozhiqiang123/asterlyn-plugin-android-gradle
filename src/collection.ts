@@ -60,7 +60,7 @@ export function buildAndroidGradleTaskCollection(snapshot: SdkTaskProviderSnapsh
           nodes.push({
             id: `${groupId}.${stableId("task", task.id)}`,
             parentId: groupId,
-            label: taskName(task.id, task.label),
+            label: task.id,
             kind: "task",
             order: taskIndex,
             taskId: task.id,
@@ -82,12 +82,6 @@ function taskProjectPath(taskId: string, explicit: string | undefined): string {
 function groupLabel(group: string): string {
   const trimmed = group.replace(/\s+tasks$/iu, "").trim() || group.trim() || "Other";
   return trimmed.charAt(0).toLocaleLowerCase() + trimmed.slice(1);
-}
-
-function taskName(id: string, fallback: string): string {
-  const separator = id.lastIndexOf(":");
-  const name = separator >= 0 ? id.slice(separator + 1) : id;
-  return name || fallback;
 }
 
 function stableId(kind: string, value: string): string {
