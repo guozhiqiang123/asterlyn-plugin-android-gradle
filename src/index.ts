@@ -20,6 +20,18 @@ export {
 } from "./devices.ts";
 export { createAndroidDeviceProvider, type AndroidDeviceProviderRuntime } from "./device-provider.ts";
 export {
+  ANDROID_RUN_CONFIGURATION_PROVIDER_ID,
+  ANDROID_RUN_TARGET_PROVIDER_ID,
+  androidRunConfigurationSnapshot,
+  buildAndroidStagedRunPlan,
+  deriveAndroidRunConfigurations,
+  extractInstalledApkBasename,
+  parseAndroidLaunchComponent,
+  resolveInstalledApkArtifact,
+  type AndroidLaunchComponent,
+  type AndroidRunConfiguration,
+} from "./run-configurations.ts";
+export {
   ANDROID_GRADLE_COLLECTION_PROVIDER_ID,
   buildAndroidGradleTaskCollection,
 } from "./collection.ts";

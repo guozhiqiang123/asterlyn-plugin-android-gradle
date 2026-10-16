@@ -30,6 +30,12 @@ import type { SdkTaskProviderCacheMetadata } from "@asterlyn/plugin-sdk";
 import { buildAndroidGradleTaskCollection } from "./collection.ts";
 import { ANDROID_GRADLE_PLUGIN_MANIFEST } from "./manifest.ts";
 import { createAndroidDeviceProvider } from "./device-provider.ts";
+import {
+  ANDROID_RUN_CONFIGURATION_PROVIDER_ID,
+  androidRunConfigurationSnapshot,
+  buildAndroidStagedRunPlan,
+  deriveAndroidRunConfigurations,
+} from "./run-configurations.ts";
 
 export const ANDROID_GRADLE_PLUGIN_ID = ANDROID_GRADLE_PLUGIN_MANIFEST.id;
 
@@ -86,6 +92,7 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
     const listeners = new Set<() => void>();
     let disposed = false;
     let revision = 0;
+    let selectedRunConfigurationId: string | null = null;
     let currentFingerprint: { readonly digest: string | null } | null = null;
     const cacheMissReason: SdkTaskProviderCacheMetadata["staleReason"] = "cache-miss";
     const publish = () => { if (disposed) return; for (const listener of listeners) listener(); };
@@ -201,6 +208,7 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
           ...(artifactHints.length > 0 ? { artifactSearch: { hints: artifactHints } } : {}),
           apply: (result: PluginTaskExecutionResult) => {
             snapshot = applyGradleTaskResult(snapshot, taskId, result);
+            publish();
           },
         };
       },
@@ -213,24 +221,38 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
     const deviceDisposable = context.contribute(devices.contribution);
     const runConfigurationDisposable = context.contribute({
       kind: "run-configuration-provider",
-      id: "android-run-configurations",
-      snapshot: () => ({
-        status: "ready",
-        configurations: [{
-          id: "android-app",
-          label: "Android app",
-          detail: "Run is unavailable until the application ID and launcher activity are resolved authoritatively.",
-          status: "incomplete",
-          targetProviderId: "android-devices",
-          metadata: {
-            labelKey: "run.configuration.androidApp",
-            detailKey: "run.configuration.incomplete",
-          },
-        }],
-        selectedConfigurationId: "android-app",
-      }),
+      id: ANDROID_RUN_CONFIGURATION_PROVIDER_ID,
+      snapshot: () => androidRunConfigurationSnapshot(snapshot, selectedRunConfigurationId),
+      subscribe: (listener: () => void) => {
+        listeners.add(listener);
+        return { dispose: () => { listeners.delete(listener); } };
+      },
+      select: async (configurationId: string | null) => {
+        if (configurationId !== null && !deriveAndroidRunConfigurations(snapshot).some((configuration) => configuration.id === configurationId)) {
+          throw new Error(`Android run configuration is unavailable: ${configurationId}`);
+        }
+        selectedRunConfigurationId = configurationId;
+        publish();
+        await context.workspaceState?.write("selectedRunConfiguration", configurationId ?? "");
+      },
+      run: async (configurationId: string, targetId?: string) => {
+        if (!targetId) return null;
+        const configuration = deriveAndroidRunConfigurations(snapshot).find((candidate) => candidate.id === configurationId);
+        if (!configuration) return null;
+        const install = await provider.run(configuration.taskId);
+        if (!install?.artifactSearch?.hints.length) return null;
+        return buildAndroidStagedRunPlan(install, targetId, (result) => {
+          snapshot = setGradleTaskRunState(snapshot, configuration.taskId, result.status);
+          publish();
+        });
+      },
     });
     devices.start();
+    void context.workspaceState?.read("selectedRunConfiguration").then((restored) => {
+      if (disposed) return;
+      selectedRunConfigurationId = restored || null;
+      publish();
+    }, () => undefined);
     if (cache) void restoreFromCache(revision);
 
     async function restoreFromCache(restoreRevision: number): Promise<void> {

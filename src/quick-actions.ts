@@ -103,9 +103,9 @@ export function resolveGradleQuickAction(
 /** Return the only host-approved output directory implied by an exact build task identity. */
 export function gradleTaskArtifactHints(taskId: string): readonly string[] {
   const parsed = parseTaskId(taskId);
-  if (!parsed || (parsed.kind !== "assemble" && parsed.kind !== "bundle")) return [];
+  if (!parsed || (parsed.kind !== "assemble" && parsed.kind !== "bundle" && parsed.kind !== "install")) return [];
   const modulePath = parsed.module === ":" ? "" : `${parsed.module.slice(1).replaceAll(":", "/")}/`;
-  return [`${modulePath}build/outputs/${parsed.kind === "assemble" ? "apk" : "bundle"}`];
+  return [`${modulePath}build/outputs/${parsed.kind === "bundle" ? "bundle" : "apk"}`];
 }
 
 function parseTaskId(taskId: string): { readonly module: string; readonly kind: AndroidGradleQuickActionKind; readonly variant: string } | null {

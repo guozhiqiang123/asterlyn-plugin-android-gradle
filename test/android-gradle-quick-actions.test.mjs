@@ -63,6 +63,6 @@ test("build actions derive only their exact conventional bounded output director
   assert.deepEqual(gradleTaskArtifactHints(":assembleDebug"), ["build/outputs/apk"]);
   assert.deepEqual(gradleTaskArtifactHints(":app:bundleRelease"), ["app/build/outputs/bundle"]);
   assert.deepEqual(gradleTaskArtifactHints(":features:demo:assembleDebug"), ["features/demo/build/outputs/apk"]);
-  assert.deepEqual(gradleTaskArtifactHints(":app:installDebug"), []);
+  assert.deepEqual(gradleTaskArtifactHints(":app:installDebug"), ["app/build/outputs/apk"]);
   assert.deepEqual(gradleTaskArtifactHints(":../app:assembleDebug"), []);
 });
