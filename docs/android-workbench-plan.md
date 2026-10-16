@@ -167,3 +167,10 @@ uninstall removes the existing app and local data. Approval invokes only the adm
 `android.adb.uninstall` operation, after which the host retries the same APK once; cancellation or
 any other install failure ends Run without uninstalling. The plugin never calls ADB or host UI
 directly.
+
+Plugin `0.5.0` adopts SDK `1.7.0` and implements this recovery as a failure-only lazy-loaded module.
+It recognizes only a complete, untruncated `INSTALL_FAILED_UPDATE_INCOMPATIBLE` token, derives the
+package exclusively from the already inspected APK, and returns the selected target plus package
+to `android.adb.uninstall`. All 60 plugin tests and the package build pass. Real FilesRecovery
+acceptance produced the expected signature conflict without uninstalling the retained application;
+the installed host now owns the explicit cancel-or-uninstall interaction.
