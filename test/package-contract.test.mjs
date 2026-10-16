@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.5.1");
+  assert.equal(packageJson.version, "0.5.2");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
@@ -44,7 +44,6 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
   for (const key of [
     "panel.run",
     "panel.tasks",
-    "panel.devices",
     "device.status.online",
     "device.status.offline",
     "device.status.unauthorized",
@@ -90,6 +89,7 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
   assert.ok(staticManifest.capabilities.includes("taskAuthorization"));
   assert.ok(staticManifest.capabilities.includes("toolOperations"));
   assert.equal(staticManifest.workspaceTool.defaultView, "tasks");
+  assert.deepEqual(staticManifest.workspaceTool.views.map((view) => view.id), ["run", "tasks"]);
   assert.deepEqual(staticManifest.processQueries.map((query) => query.id), ["adb.devices"]);
   assert.deepEqual(staticManifest.toolOperations.map((operation) => operation.id), ["android.apk.inspect", "android.adb.install", "android.adb.uninstall", "android.adb.launch"]);
 });

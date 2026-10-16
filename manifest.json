@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -13,7 +13,6 @@
         "description": "Android development tools for building, running, and inspecting devices.",
         "panel.run": "Run",
         "panel.tasks": "Tasks",
-        "panel.devices": "Devices",
         "device.status.online": "Online",
         "device.status.offline": "Offline",
         "device.status.unauthorized": "Unauthorized",
@@ -66,7 +65,6 @@
         "description": "用于构建、运行和查看 Android 设备的开发工具。",
         "panel.run": "运行",
         "panel.tasks": "任务",
-        "panel.devices": "设备",
         "device.status.online": "在线",
         "device.status.offline": "离线",
         "device.status.unauthorized": "未授权",
@@ -144,8 +142,7 @@
     "icon": "device",
     "views": [
       { "id": "run", "labelKey": "panel.run" },
-      { "id": "tasks", "labelKey": "panel.tasks" },
-      { "id": "devices", "labelKey": "panel.devices" }
+      { "id": "tasks", "labelKey": "panel.tasks" }
     ],
     "defaultView": "tasks"
   },
