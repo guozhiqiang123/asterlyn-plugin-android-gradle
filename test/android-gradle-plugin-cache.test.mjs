@@ -18,6 +18,7 @@ const output = "Tasks runnable from root project 'demo'\nBuild tasks\n----------
 function setup({ readStatus = "fresh", readFingerprint = "a", computeDigest = "a", payloadTasks = [task], dirtyReason = null, staleReason = null } = {}) {
   const calls = { refresh: 0, writes: 0, dirty: 0 };
   const providerHolder = { provider: null };
+  const contributions = [];
   const payloadBase64 = payloadTasks === null ? null : encodeAndroidGradleCachePayload(payloadTasks, ANDROID_GRADLE_PLUGIN.id, ANDROID_GRADLE_PLUGIN.version, "gradle-tasks");
   const cache = {
     computeFingerprint: async () => fingerprint(computeDigest),
@@ -28,12 +29,13 @@ function setup({ readStatus = "fresh", readFingerprint = "a", computeDigest = "a
   const context = {
     identity: { root: "/repo", generation: 1 }, evidence, taskCache: cache,
     contribute: (contribution) => {
+      contributions.push(contribution);
       if (contribution.kind === "provider") providerHolder.provider = contribution;
       if (contribution.kind === "provider") calls.refresh += 0;
       return { dispose() {} };
     },
   };
-  return { context, providerHolder, calls };
+  return { context, providerHolder, contributions, calls };
 }
 
 const settle = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); };
@@ -119,4 +121,34 @@ test("watcher invalidation wins over an in-flight cache write", async () => {
   assert.equal(state.calls.writes, 0);
   assert.equal(provider.snapshot().cache.status, "stale");
   assert.equal(provider.snapshot().cache.staleReason, "watcher-change");
+});
+
+test("Android evidence exposes a staged Run plan for an exact install variant", async () => {
+  const state = setup({ payloadTasks: null, readStatus: "miss" });
+  state.context.evidence = {
+    ...evidence,
+    files: [...evidence.files, { workspacePath: "app/src/main/AndroidManifest.xml" }],
+  };
+  await ANDROID_GRADLE_PLUGIN.activate(state.context);
+  await settle();
+  const provider = state.providerHolder.provider;
+  provider.refresh().apply({
+    status: "succeeded",
+    outputs: [{
+      stream: "stdout",
+      dataBase64: btoa("Tasks runnable from root project 'demo'\nInstall tasks\n-------------\n:app:installDemoDebug - Installs DemoDebug.\n:app:installDemoDebugAndroidTest - Installs tests.\n"),
+    }],
+    truncated: false,
+    error: null,
+  });
+  await settle();
+  const runs = state.contributions.find((contribution) => contribution.kind === "run-configuration-provider");
+  assert.ok(runs);
+  assert.deepEqual(runs.snapshot().configurations.map(({ id, detail }) => ({ id, detail })), [{
+    id: "android-run::app:installDemoDebug",
+    detail: ":app:installDemoDebug",
+  }]);
+  const plan = await runs.run("android-run::app:installDemoDebug", "phone-1");
+  assert.equal(plan.kind, "staged");
+  assert.deepEqual(plan.install.artifactSearch, { hints: ["app/build/outputs/apk"] });
 });

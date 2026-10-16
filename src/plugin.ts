@@ -222,13 +222,16 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
     const runConfigurationDisposable = context.contribute({
       kind: "run-configuration-provider",
       id: ANDROID_RUN_CONFIGURATION_PROVIDER_ID,
-      snapshot: () => androidRunConfigurationSnapshot(snapshot, selectedRunConfigurationId),
+      snapshot: () => androidRunConfigurationSnapshot(
+        detection.android ? snapshot : { status: "ready", tasks: [] },
+        selectedRunConfigurationId,
+      ),
       subscribe: (listener: () => void) => {
         listeners.add(listener);
         return { dispose: () => { listeners.delete(listener); } };
       },
       select: async (configurationId: string | null) => {
-        if (configurationId !== null && !deriveAndroidRunConfigurations(snapshot).some((configuration) => configuration.id === configurationId)) {
+        if (configurationId !== null && (!detection.android || !deriveAndroidRunConfigurations(snapshot).some((configuration) => configuration.id === configurationId))) {
           throw new Error(`Android run configuration is unavailable: ${configurationId}`);
         }
         selectedRunConfigurationId = configurationId;
@@ -236,7 +239,7 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
         await context.workspaceState?.write("selectedRunConfiguration", configurationId ?? "");
       },
       run: async (configurationId: string, targetId?: string) => {
-        if (!targetId) return null;
+        if (!detection.android || !targetId) return null;
         const configuration = deriveAndroidRunConfigurations(snapshot).find((candidate) => candidate.id === configurationId);
         if (!configuration) return null;
         const install = await provider.run(configuration.taskId);
