@@ -53,9 +53,8 @@ export function detectAndroidGradleEvidence(
     .filter((path): path is string => path !== null);
   const unique = [...new Set(paths)].sort(comparePaths);
   const rootNames = new Set(unique.filter((path) => !path.includes("/")));
-  const wrapper = rootNames.has("gradlew")
-    ? "gradlew"
-    : rootNames.has("gradlew.bat") ? "gradlew.bat" : null;
+  const expectedWrapper = platform === "windows" ? "gradlew.bat" : "gradlew";
+  const wrapper = rootNames.has(expectedWrapper) ? expectedWrapper : null;
   const rootSettings = [...rootNames].some((name) => SETTINGS.has(name));
   const rootBuild = [...rootNames].some((name) => BUILDS.has(name));
   const wrapperProperties = unique.includes("gradle/wrapper/gradle-wrapper.properties");
@@ -74,6 +73,12 @@ export function detectAndroidGradleEvidence(
     wrapper,
     evidence: Object.freeze(unique.filter((path) => isEvidencePath(path, platform))),
   });
+}
+
+/** Executable project applicability stays plugin-owned and fails closed on partial evidence. */
+export function isRunnableGradleWorkspace(evidence: AndroidGradleEvidenceSnapshot): boolean {
+  const expectedWrapper = evidence.platform === "windows" ? "gradlew.bat" : "gradlew";
+  return evidence.bounded && !evidence.catalogTruncated && evidence.gradle && evidence.wrapper === expectedWrapper;
 }
 
 function emptySnapshot(

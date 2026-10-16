@@ -14,6 +14,11 @@ catalogs; the executable module reuses that manifest rather than maintaining ano
 copy table. Asterlyn owns and enforces the native authorization store; this plugin owns only the
 stable authorization IDs and user-facing copy.
 
+Workspace applicability is determined from the bounded catalog supplied by the host. The plugin
+requires a platform-matching Gradle wrapper at the workspace root (`gradlew` on POSIX or
+`gradlew.bat` on Windows); Android manifests enrich Android quick actions but are not required for
+the complete Gradle task tree. The plugin never probes the filesystem directly.
+
 Run `npm run verify` before producing an artifact. The checked-in SDK tarball pins the exact
 contract used by clean and offline builds; update it only together with `package-lock.json` and a
 recorded host compatibility change.

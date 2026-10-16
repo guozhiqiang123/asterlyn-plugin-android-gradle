@@ -8,6 +8,7 @@ import type {
 } from "@asterlyn/plugin-sdk";
 import {
   detectAndroidGradleEvidence,
+  isRunnableGradleWorkspace,
   type AndroidGradleEvidenceSnapshot,
 } from "./detector.ts";
 import {
@@ -55,7 +56,10 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
   id: ANDROID_GRADLE_PLUGIN_ID,
   version: ANDROID_GRADLE_PLUGIN_MANIFEST.version,
   manifest: ANDROID_GRADLE_PLUGIN_MANIFEST,
-  matches: (context: SdkPluginMatchContext) => detectAndroidGradlePluginEvidence(context)?.android === true,
+  matches: (context: SdkPluginMatchContext) => {
+    const evidence = detectAndroidGradlePluginEvidence(context);
+    return evidence !== null && isRunnableGradleWorkspace(evidence);
+  },
   evidenceKey: (context: SdkPluginMatchContext) => {
     const evidence = detectAndroidGradlePluginEvidence(context);
     const catalog = catalogEvidence(context.evidence);
@@ -72,7 +76,7 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
   },
   activate: (context: SdkPluginActivationContext) => {
     const detected = detectAndroidGradlePluginEvidence(context);
-    if (!detected || !detected.android) return;
+    if (!detected || !isRunnableGradleWorkspace(detected)) return;
     const detection = detected;
     const cache: SdkPluginTaskCacheCapability = context.taskCache;
     const catalog = catalogEvidence(context.evidence)?.files ?? [];

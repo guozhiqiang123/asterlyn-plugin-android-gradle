@@ -8,7 +8,7 @@ const evidence = {
   kind: "workspace-catalog", platform: "posix", truncated: false,
   files: [
     { workspacePath: "settings.gradle" }, { workspacePath: "build.gradle" }, { workspacePath: "gradlew" },
-    { workspacePath: "app/src/main/AndroidManifest.xml" }, { workspacePath: "app/build.gradle" },
+    { workspacePath: "app/build.gradle" },
   ],
 };
 const fingerprint = (digest) => ({ status: "ready", digest });

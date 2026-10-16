@@ -1,6 +1,6 @@
 {
   "name": "@asterlyn/plugin-android-gradle",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "files": ["dist", "manifest.json"],

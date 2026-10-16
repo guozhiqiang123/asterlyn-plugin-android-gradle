@@ -9,10 +9,10 @@ import {
 } from "../src/index.ts";
 
 function evidence(platform = "posix", wrapper = platform === "windows" ? "gradlew.bat" : "gradlew") {
-  return { kind: "android-gradle-evidence", workspaceRoot: "/repo", generation: 3, platform, bounded: true, catalogTruncated: false, gradle: true, android: true, wrapper, evidence: [] };
+  return { kind: "android-gradle-evidence", workspaceRoot: "/repo", generation: 3, platform, bounded: true, catalogTruncated: false, gradle: true, android: false, wrapper, evidence: [] };
 }
 
-test("selects the platform-matching wrapper with fixed host-owned arguments", () => {
+test("selects the platform-matching wrapper for ordinary Gradle evidence with fixed arguments", () => {
   const posix = buildGradleWrapperRequest(evidence());
   assert.equal(posix.supported, true);
   assert.equal(posix.request.executablePath, "gradlew");

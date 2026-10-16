@@ -27,7 +27,7 @@ export type GradleWrapperRequestResult =
 export function buildGradleWrapperRequest(
   evidence: AndroidGradleEvidenceSnapshot,
 ): GradleWrapperRequestResult {
-  if (!evidence.gradle || !evidence.android) return { supported: false, reason: "unsupported-evidence" };
+  if (!evidence.gradle) return { supported: false, reason: "unsupported-evidence" };
   if (!evidence.bounded || evidence.catalogTruncated) return { supported: false, reason: "unsupported-evidence" };
   const expected = evidence.platform === "windows" ? "gradlew.bat" : "gradlew";
   if (!evidence.wrapper) return { supported: false, reason: "wrapper-missing" };

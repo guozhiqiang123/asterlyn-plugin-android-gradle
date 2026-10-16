@@ -49,10 +49,17 @@ test("preserves catalog truncation without inventing missing evidence", () => {
 });
 
 test("distinguishes ordinary Gradle from Android", () => {
-  const result = detect(["settings.gradle", "build.gradle", "gradlew.bat"]);
+  const result = detect(["settings.gradle", "build.gradle", "gradlew.bat"], "windows");
   assert.equal(result.gradle, true);
   assert.equal(result.android, false);
   assert.equal(result.wrapper, "gradlew.bat");
+});
+
+test("selects only the platform-matching root wrapper", () => {
+  assert.equal(detect(["gradlew", "gradlew.bat"], "posix").wrapper, "gradlew");
+  assert.equal(detect(["gradlew", "gradlew.bat"], "windows").wrapper, "gradlew.bat");
+  assert.equal(detect(["settings.gradle", "gradlew.bat"], "posix").wrapper, null);
+  assert.equal(detect(["settings.gradle", "gradlew"], "windows").wrapper, null);
 });
 
 test("does not infer Gradle or Android from unrelated files", () => {
