@@ -242,9 +242,9 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
         if (!detection.android || !targetId) return null;
         const configuration = deriveAndroidRunConfigurations(snapshot).find((candidate) => candidate.id === configurationId);
         if (!configuration) return null;
-        const install = await provider.run(configuration.taskId);
-        if (!install?.artifactSearch?.hints.length) return null;
-        return buildAndroidStagedRunPlan(install, targetId, (result) => {
+        const build = await provider.run(configuration.taskId);
+        if (!build?.artifactSearch?.hints.length) return null;
+        return buildAndroidStagedRunPlan(build, targetId, configuration.variant, (result) => {
           snapshot = setGradleTaskRunState(snapshot, configuration.taskId, result.status);
           publish();
         });

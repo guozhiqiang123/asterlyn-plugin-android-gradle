@@ -144,3 +144,15 @@ an existing flavor APK resolved to `com.photo.recovery.global.tt` and
 installation, and rendered smoke passed. Interactive install-and-launch remains the user's manual
 acceptance step; debugger, Logcat, split APKs, parallel Runs, and full Android Studio parity remain
 outside this release.
+
+### Exact-device deployment checkpoint
+
+Plugin `0.4.0` adopts SDK `1.6.0` and corrects the Run boundary:
+
+- install tasks remain application-variant evidence, but a matching assemble task is now required
+  and is the only Gradle task executed by Run;
+- bounded `output-metadata.json` sidecars identify the exact variant and one contained `SINGLE`
+  APK without relying on stale-directory order or Gradle console text;
+- the plugin requests `android.adb.install` with the selected target and exact workspace APK before
+  requesting component launch; and
+- split or ambiguous outputs fail closed until target-aware multi-APK selection is implemented.

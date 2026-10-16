@@ -136,7 +136,7 @@ test("Android evidence exposes a staged Run plan for an exact install variant", 
     status: "succeeded",
     outputs: [{
       stream: "stdout",
-      dataBase64: btoa("Tasks runnable from root project 'demo'\nInstall tasks\n-------------\n:app:installDemoDebug - Installs DemoDebug.\n:app:installDemoDebugAndroidTest - Installs tests.\n"),
+      dataBase64: btoa("Tasks runnable from root project 'demo'\nBuild tasks\n-----------\n:app:assembleDemoDebug - Assembles DemoDebug.\n\nInstall tasks\n-------------\n:app:installDemoDebug - Installs DemoDebug.\n:app:installDemoDebugAndroidTest - Installs tests.\n"),
     }],
     truncated: false,
     error: null,
@@ -146,9 +146,10 @@ test("Android evidence exposes a staged Run plan for an exact install variant", 
   assert.ok(runs);
   assert.deepEqual(runs.snapshot().configurations.map(({ id, detail }) => ({ id, detail })), [{
     id: "android-run::app:installDemoDebug",
-    detail: ":app:installDemoDebug",
+    detail: ":app:assembleDemoDebug",
   }]);
   const plan = await runs.run("android-run::app:installDemoDebug", "phone-1");
   assert.equal(plan.kind, "staged");
-  assert.deepEqual(plan.install.artifactSearch, { hints: ["app/build/outputs/apk"] });
+  assert.equal(plan.build.request.taskId, ":app:assembleDemoDebug");
+  assert.deepEqual(plan.build.artifactSearch, { hints: ["app/build/outputs/apk"], sidecarNames: ["output-metadata.json"] });
 });

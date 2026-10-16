@@ -1,5 +1,6 @@
 import type {
   SdkRunArtifact,
+  SdkRunArtifactSidecar,
   SdkRunConfigurationDescriptor,
   SdkRunConfigurationProviderSnapshot,
   SdkRunSessionResult,
@@ -16,7 +17,10 @@ export const ANDROID_RUN_TARGET_PROVIDER_ID = "android-devices";
 
 export interface AndroidRunConfiguration {
   readonly id: string;
+  /** Exact assemble task executed by Run. */
   readonly taskId: string;
+  /** Install-task evidence proving this is an application variant. */
+  readonly installTaskId: string;
   readonly module: string;
   readonly variant: string;
   readonly descriptor: SdkRunConfigurationDescriptor;
@@ -29,27 +33,32 @@ export interface AndroidLaunchComponent {
 }
 
 /**
- * An install task is the authoritative Gradle surface for an Android application variant.
- * Instrumentation-test install tasks are intentionally excluded from the application Run list.
+ * Install tasks identify application variants, while a matching assemble task is required for
+ * host-controlled exact-device deployment. Instrumentation-test install tasks are excluded.
  */
 export function deriveAndroidRunConfigurations(snapshot: GradleTaskDiscoveryResult): readonly AndroidRunConfiguration[] {
-  return deriveGradleQuickActions(snapshot).actions
+  const actions = deriveGradleQuickActions(snapshot).actions;
+  const builds = new Map(actions.filter((action) => action.kind === "assemble").map((action) => [`${action.module}\0${action.variant}`, action]));
+  return actions
     .filter((action) => action.kind === "install" && !action.variant.endsWith("AndroidTest"))
-    .map((action) => {
-      const moduleLabel = action.module === ":" ? "root" : action.module.slice(1);
-      const id = `android-run:${action.taskId}`;
+    .flatMap((install) => {
+      const build = builds.get(`${install.module}\0${install.variant}`);
+      if (!build) return [];
+      const moduleLabel = install.module === ":" ? "root" : install.module.slice(1);
+      const id = `android-run:${install.taskId}`;
       return Object.freeze({
         id,
-        taskId: action.taskId,
-        module: action.module,
-        variant: action.variant,
+        taskId: build.taskId,
+        installTaskId: install.taskId,
+        module: install.module,
+        variant: install.variant,
         descriptor: Object.freeze({
           id,
-          label: `${moduleLabel} · ${action.variant}`,
-          detail: action.taskId,
+          label: `${moduleLabel} · ${install.variant}`,
+          detail: build.taskId,
           status: "ready" as const,
           targetProviderId: ANDROID_RUN_TARGET_PROVIDER_ID,
-          metadata: Object.freeze({ module: action.module, variant: action.variant, taskId: action.taskId }),
+          metadata: Object.freeze({ module: install.module, variant: install.variant, taskId: build.taskId, installTaskId: install.taskId }),
         }),
       });
     });
@@ -72,28 +81,39 @@ export function androidRunConfigurationSnapshot(
 
 /** Build the value-only callbacks used by the host's supervised Run state machine. */
 export function buildAndroidStagedRunPlan(
-  install: SdkTaskRunPlan,
+  build: SdkTaskRunPlan,
   targetId: string,
+  variant: string,
   apply: (result: SdkRunSessionResult) => void,
 ): SdkStagedRunPlan {
-  let installedApkBasename: string | null = null;
-  let installOutputUsable = false;
-  const installApply = install.apply;
-  const supervisedInstall: SdkTaskRunPlan = {
-    ...install,
+  let selectedArtifact: SdkRunArtifact | null = null;
+  let buildOutputUsable = false;
+  const buildApply = build.apply;
+  const supervisedBuild: SdkTaskRunPlan = {
+    ...build,
+    artifactSearch: {
+      hints: build.artifactSearch?.hints ?? [],
+      sidecarNames: ["output-metadata.json"],
+    },
     apply: (result: SdkTaskExecutionResult) => {
-      installOutputUsable = result.status === "succeeded" && !result.truncated;
-      installedApkBasename = installOutputUsable ? extractInstalledApkBasename(result) : null;
-      installApply(result);
+      buildOutputUsable = result.status === "succeeded" && !result.truncated;
+      buildApply(result);
     },
   };
   return Object.freeze({
     kind: "staged" as const,
-    install: supervisedInstall,
-    inspect: (artifacts: readonly SdkRunArtifact[]) => {
-      if (!installOutputUsable) return null;
-      const artifact = resolveInstalledApkArtifact(artifacts, installedApkBasename);
-      return artifact ? { operationId: "android.apk.inspect", parameters: { artifact: artifact.workspacePath } } : null;
+    build: supervisedBuild,
+    inspect: (artifacts: readonly SdkRunArtifact[], sidecars: readonly SdkRunArtifactSidecar[], truncated: boolean) => {
+      if (!buildOutputUsable || truncated) return null;
+      selectedArtifact = resolveAgpSingleApkArtifact(artifacts, sidecars, variant);
+      return selectedArtifact ? { operationId: "android.apk.inspect", parameters: { artifact: selectedArtifact.workspacePath } } : null;
+    },
+    deploy: (inspection: SdkToolOperationResult) => {
+      if (!selectedArtifact || inspection.status !== "succeeded" || inspection.truncated) return null;
+      return {
+        operationId: "android.adb.install",
+        parameters: { target: targetId, artifact: selectedArtifact.workspacePath },
+      };
     },
     launch: (inspection: SdkToolOperationResult) => {
       if (inspection.status !== "succeeded" || inspection.truncated) return null;
@@ -107,35 +127,42 @@ export function buildAndroidStagedRunPlan(
   });
 }
 
-export function extractInstalledApkBasename(result: SdkTaskExecutionResult): string | null {
-  if (result.status !== "succeeded" || result.truncated) return null;
-  let text = "";
-  for (const output of result.outputs) {
-    const chunk = decodeBase64Utf8(output.dataBase64);
-    if (chunk === null) return null;
-    text += chunk;
+export function resolveAgpSingleApkArtifact(
+  artifacts: readonly SdkRunArtifact[],
+  sidecars: readonly SdkRunArtifactSidecar[],
+  variant: string,
+): SdkRunArtifact | null {
+  if (!variant || variant.length > 256 || !/^[A-Za-z0-9_.-]+$/u.test(variant)) return null;
+  const artifactByPath = new Map(
+    artifacts.filter((artifact) => artifact.kind === "apk" && artifact.workspacePath.endsWith(".apk"))
+      .map((artifact) => [artifact.workspacePath, artifact]),
+  );
+  const matches: SdkRunArtifact[] = [];
+  for (const sidecar of sidecars) {
+    if (!sidecar.workspacePath.endsWith("/output-metadata.json")) continue;
+    const metadata = parseAgpOutputMetadata(decodeBase64Utf8(sidecar.dataBase64));
+    if (!metadata || metadata.variantName !== variant || metadata.outputFile.includes("/") || metadata.outputFile.includes("\\")) continue;
+    const directory = sidecar.workspacePath.slice(0, sidecar.workspacePath.lastIndexOf("/") + 1);
+    const artifact = artifactByPath.get(`${directory}${metadata.outputFile}`);
+    if (artifact) matches.push(artifact);
   }
-  const installed = new Set<string>();
-  const pattern = /Installing APK\s+['"]([^'"\r\n]+\.apk)['"]/giu;
-  for (const match of text.matchAll(pattern)) {
-    const path = match[1];
-    if (!path) continue;
-    const basename = path.replaceAll("\\", "/").split("/").at(-1);
-    if (basename) installed.add(basename);
-  }
-  return installed.size === 1 ? [...installed][0] ?? null : null;
+  return matches.length === 1 ? matches[0] ?? null : null;
 }
 
-export function resolveInstalledApkArtifact(
-  artifacts: readonly SdkRunArtifact[],
-  installedApkBasename: string | null,
-): SdkRunArtifact | null {
-  const apks = artifacts.filter((artifact) => artifact.kind === "apk" && artifact.workspacePath.toLowerCase().endsWith(".apk"));
-  if (installedApkBasename) {
-    const matches = apks.filter((artifact) => artifact.workspacePath.replaceAll("\\", "/").split("/").at(-1) === installedApkBasename);
-    return matches.length === 1 ? matches[0] ?? null : null;
+export function parseAgpOutputMetadata(text: string | null): { readonly variantName: string; readonly outputFile: string } | null {
+  if (!text || text.length > 65_536) return null;
+  try {
+    const value = JSON.parse(text) as Record<string, unknown>;
+    if (value.artifactType && (typeof value.artifactType !== "object" || (value.artifactType as Record<string, unknown>).type !== "APK")) return null;
+    if (typeof value.variantName !== "string" || !Array.isArray(value.elements) || value.elements.length !== 1) return null;
+    const element = value.elements[0];
+    if (!element || typeof element !== "object") return null;
+    const record = element as Record<string, unknown>;
+    if (record.type !== "SINGLE" || typeof record.outputFile !== "string" || !record.outputFile.endsWith(".apk") || record.outputFile.length > 512) return null;
+    return Object.freeze({ variantName: value.variantName, outputFile: record.outputFile });
+  } catch {
+    return null;
   }
-  return apks.length === 1 ? apks[0] ?? null : null;
 }
 
 /** Parse only AAPT's stable badging records; source manifests and Gradle files are not guessed. */

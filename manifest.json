@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -39,9 +39,10 @@
         "run.session.failed": "Android application Run failed.",
         "run.session.cancelled": "Android application Run was cancelled.",
         "run.session.crashed": "Android application Run crashed.",
-        "run.phase.building": "Building and installing application…",
-        "run.phase.resolving-artifact": "Resolving installed APK…",
+        "run.phase.building": "Building application…",
+        "run.phase.resolving-artifact": "Resolving built APK…",
         "run.phase.validating-target": "Validating selected device…",
+        "run.phase.installing": "Installing on selected device…",
         "run.phase.launching": "Launching application…",
         "settings.taskPresentation.label": "Task presentation",
         "settings.taskPresentation.description": "Choose the task tree shown in the Tasks tool window.",
@@ -83,9 +84,10 @@
         "run.session.failed": "Android 应用运行失败。",
         "run.session.cancelled": "Android 应用运行已取消。",
         "run.session.crashed": "Android 应用运行异常终止。",
-        "run.phase.building": "正在构建并安装应用…",
-        "run.phase.resolving-artifact": "正在定位已安装的 APK…",
+        "run.phase.building": "正在构建应用…",
+        "run.phase.resolving-artifact": "正在定位构建生成的 APK…",
         "run.phase.validating-target": "正在验证所选设备…",
+        "run.phase.installing": "正在安装到所选设备…",
         "run.phase.launching": "正在启动应用…",
         "settings.taskPresentation.label": "任务展示方式",
         "settings.taskPresentation.description": "选择任务窗口中显示的任务树。",
@@ -159,6 +161,29 @@
       "maxOutputBytes": 262144,
       "executables": [
         { "type": "path", "name": "aapt" }
+      ]
+    },
+    {
+      "id": "android.adb.install",
+      "intent": "mutation",
+      "args": [
+        { "type": "literal", "value": "-s" },
+        { "type": "parameter", "name": "target" },
+        { "type": "literal", "value": "install" },
+        { "type": "literal", "value": "-r" },
+        { "type": "parameter", "name": "artifact" }
+      ],
+      "parameters": [
+        { "name": "target", "kind": "executionTargetId" },
+        { "name": "artifact", "kind": "workspaceArtifact", "suffixes": [".apk"] }
+      ],
+      "timeoutMs": 300000,
+      "maxOutputBytes": 262144,
+      "executables": [
+        { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
+        { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
+        { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
+        { "type": "path", "name": "adb" }
       ]
     },
     {

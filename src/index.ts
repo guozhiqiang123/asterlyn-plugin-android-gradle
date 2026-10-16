@@ -25,9 +25,9 @@ export {
   androidRunConfigurationSnapshot,
   buildAndroidStagedRunPlan,
   deriveAndroidRunConfigurations,
-  extractInstalledApkBasename,
+  parseAgpOutputMetadata,
   parseAndroidLaunchComponent,
-  resolveInstalledApkArtifact,
+  resolveAgpSingleApkArtifact,
   type AndroidLaunchComponent,
   type AndroidRunConfiguration,
 } from "./run-configurations.ts";
