@@ -5,6 +5,7 @@ import {
   androidRunConfigurationSnapshot,
   buildAndroidStagedRunPlan,
   deriveAndroidRunConfigurations,
+  isUpdateIncompatibleDeployment,
   parseAgpOutputMetadata,
   parseAndroidLaunchComponent,
   resolveAgpSingleApkArtifact,
@@ -106,12 +107,42 @@ test("staged Run resolves AGP output metadata and installs on the selected devic
     operationId: "android.adb.install",
     parameters: { target: "emulator-5554", artifact: "app/build/outputs/apk/demo/debug/app-demo-debug.apk" },
   });
+  const incompatible = {
+    status: "failed",
+    stdout: "",
+    stderr: "adb: failed to install: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match]",
+    truncated: false,
+    exitCode: 1,
+    error: null,
+  };
+  assert.deepEqual(plan.recoverDeployment(inspection, incompatible), {
+    confirmation: {
+      titleKey: "run.recovery.uninstall.title",
+      messageKey: "run.recovery.uninstall.message",
+      confirmLabelKey: "run.recovery.uninstall.confirm",
+      cancelLabelKey: "run.recovery.uninstall.cancel",
+      destructive: true,
+    },
+    operation: {
+      operationId: "android.adb.uninstall",
+      parameters: { target: "emulator-5554", applicationId: "com.example.demo" },
+    },
+  });
   assert.deepEqual(plan.launch(inspection), {
     operationId: "android.adb.launch",
     parameters: { target: "emulator-5554", component: "com.example.demo/com.example.demo.MainActivity" },
   });
   plan.apply({ status: "succeeded", phase: "launching", error: null });
   assert.equal(applied[0].status, "succeeded");
+});
+
+test("deployment recovery accepts only exact, complete signature-conflict results", () => {
+  const failed = (stderr, overrides = {}) => ({ status: "failed", stdout: "", stderr, truncated: false, exitCode: 1, error: null, ...overrides });
+  assert.equal(isUpdateIncompatibleDeployment(failed("Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE]")), true);
+  assert.equal(isUpdateIncompatibleDeployment(failed("INSTALL_FAILED_VERSION_DOWNGRADE")), false);
+  assert.equal(isUpdateIncompatibleDeployment(failed("prefixINSTALL_FAILED_UPDATE_INCOMPATIBLEsuffix")), false);
+  assert.equal(isUpdateIncompatibleDeployment(failed("INSTALL_FAILED_UPDATE_INCOMPATIBLE", { truncated: true })), false);
+  assert.equal(isUpdateIncompatibleDeployment({ ...failed("INSTALL_FAILED_UPDATE_INCOMPATIBLE"), status: "succeeded" }), false);
 });
 
 test("AGP artifact resolution fails closed for mismatched, ambiguous, split, or malformed metadata", () => {

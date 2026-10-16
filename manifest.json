@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -43,7 +43,13 @@
         "run.phase.resolving-artifact": "Resolving built APK…",
         "run.phase.validating-target": "Validating selected device…",
         "run.phase.installing": "Installing on selected device…",
+        "run.phase.awaiting-deployment-recovery": "Waiting for permission to replace the existing app…",
+        "run.phase.recovering-deployment": "Removing the incompatible existing app…",
         "run.phase.launching": "Launching application…",
+        "run.recovery.uninstall.title": "Replace the existing application?",
+        "run.recovery.uninstall.message": "The application already installed on the selected device was signed with a different certificate. It must be uninstalled before this build can be installed. Uninstalling will delete that application's local data.",
+        "run.recovery.uninstall.confirm": "Uninstall and continue",
+        "run.recovery.uninstall.cancel": "Keep existing app",
         "settings.taskPresentation.label": "Task presentation",
         "settings.taskPresentation.description": "Choose the task tree shown in the Tasks tool window.",
         "settings.taskPresentation.allTasksTree": "All tasks tree",
@@ -88,7 +94,13 @@
         "run.phase.resolving-artifact": "正在定位构建生成的 APK…",
         "run.phase.validating-target": "正在验证所选设备…",
         "run.phase.installing": "正在安装到所选设备…",
+        "run.phase.awaiting-deployment-recovery": "正在等待确认是否替换已有应用…",
+        "run.phase.recovering-deployment": "正在卸载签名不兼容的已有应用…",
         "run.phase.launching": "正在启动应用…",
+        "run.recovery.uninstall.title": "要替换已有应用吗？",
+        "run.recovery.uninstall.message": "所选设备上已安装的同包名应用使用了不同签名。继续安装前必须先卸载它；卸载会清除该应用的本地数据。",
+        "run.recovery.uninstall.confirm": "卸载并继续",
+        "run.recovery.uninstall.cancel": "保留已有应用",
         "settings.taskPresentation.label": "任务展示方式",
         "settings.taskPresentation.description": "选择任务窗口中显示的任务树。",
         "settings.taskPresentation.allTasksTree": "完整任务树",
@@ -178,6 +190,28 @@
         { "name": "artifact", "kind": "workspaceArtifact", "suffixes": [".apk"] }
       ],
       "timeoutMs": 300000,
+      "maxOutputBytes": 262144,
+      "executables": [
+        { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
+        { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
+        { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
+        { "type": "path", "name": "adb" }
+      ]
+    },
+    {
+      "id": "android.adb.uninstall",
+      "intent": "mutation",
+      "args": [
+        { "type": "literal", "value": "-s" },
+        { "type": "parameter", "name": "target" },
+        { "type": "literal", "value": "uninstall" },
+        { "type": "parameter", "name": "applicationId" }
+      ],
+      "parameters": [
+        { "name": "target", "kind": "executionTargetId" },
+        { "name": "applicationId", "kind": "androidApplicationId" }
+      ],
+      "timeoutMs": 15000,
       "maxOutputBytes": 262144,
       "executables": [
         { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },

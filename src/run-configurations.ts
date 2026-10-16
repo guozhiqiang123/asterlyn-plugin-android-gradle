@@ -115,6 +115,24 @@ export function buildAndroidStagedRunPlan(
         parameters: { target: targetId, artifact: selectedArtifact.workspacePath },
       };
     },
+    recoverDeployment: (inspection: SdkToolOperationResult, deployment: SdkToolOperationResult) => {
+      if (!isUpdateIncompatibleDeployment(deployment)) return null;
+      const launch = parseAndroidLaunchComponent(inspection.stdout);
+      if (!launch) return null;
+      return {
+        confirmation: {
+          titleKey: "run.recovery.uninstall.title",
+          messageKey: "run.recovery.uninstall.message",
+          confirmLabelKey: "run.recovery.uninstall.confirm",
+          cancelLabelKey: "run.recovery.uninstall.cancel",
+          destructive: true as const,
+        },
+        operation: {
+          operationId: "android.adb.uninstall",
+          parameters: { target: targetId, applicationId: launch.applicationId },
+        },
+      };
+    },
     launch: (inspection: SdkToolOperationResult) => {
       if (inspection.status !== "succeeded" || inspection.truncated) return null;
       const launch = parseAndroidLaunchComponent(inspection.stdout);
@@ -125,6 +143,11 @@ export function buildAndroidStagedRunPlan(
     },
     apply,
   });
+}
+
+export function isUpdateIncompatibleDeployment(result: SdkToolOperationResult): boolean {
+  if (result.status === "succeeded" || result.truncated) return false;
+  return /(?:^|[^A-Za-z0-9_])INSTALL_FAILED_UPDATE_INCOMPATIBLE(?:$|[^A-Za-z0-9_])/u.test(`${result.stdout}\n${result.stderr}`);
 }
 
 export function resolveAgpSingleApkArtifact(
