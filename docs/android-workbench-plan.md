@@ -64,24 +64,27 @@ restored ID is invalid until it appears online in the current snapshot.
 
 ### AP4 — run configurations
 
-- Derive module/variant/install-task candidates from the exact verified task snapshot.
+- Derive module/variant/install-task candidates from the exact verified task snapshot, but require
+  a matching exact assemble task before a configuration becomes runnable.
 - Require explicit selection whenever more than one candidate exists.
 - Acquire application ID and launcher component from the verified final APK after the selected
-  install task succeeds. Parse bounded output metadata and APK-manifest tool output, including
+  assemble task succeeds. Parse bounded output metadata and APK-manifest tool output, including
   `activity-alias`; build-file regexes are not final authority.
 - Invalidate stale configurations when Gradle fingerprints or candidate identity changes.
 
 ### AP5 — supervised application Run
 
 - Return an orchestration plan; never execute a child process directly.
-- Validate configuration and target before Gradle execution and before launch.
-- Build/install through the reviewed Gradle task service.
-- Launch through an admitted ADB operation using the exact current device serial and application
+- Validate configuration and target before Gradle execution, before install, and before launch.
+- Build through the reviewed Gradle task service, then install through the host's admitted
+  exact-device Android operation.
+- Launch through a second admitted ADB operation using the exact current device serial and application
   component.
 - Map every terminal result into one deterministic run-session result and plugin notification.
 
-The first complete Run deliberately uses post-build authority: exact `install<Variant>`, final base
-APK inspection, fresh target validation, then exact component launch. A future Gradle project model
+The corrected Run deliberately uses post-build authority: exact `assemble<Variant>`, bounded AGP
+output metadata, final APK inspection, fresh target validation, exact-device install, then exact
+component launch. A future Gradle project model
 may make package/component data visible before the first build, but it cannot replace final-
 artifact validation for the session being launched.
 
@@ -121,16 +124,17 @@ management, or full Android Studio Run parity.
 Plugin `0.3.0` adopts SDK `1.5.0` and implements AP4–AP5's first executable slice:
 
 - exact runnable `install<Variant>` tasks become stable module/variant configurations only when the
-  workspace has Android evidence;
+  workspace has Android evidence and a matching runnable `assemble<Variant>` task;
 - `install<Variant>AndroidTest` is excluded from application Run;
 - the selected configuration is remembered through plugin-namespaced workspace state;
-- the install plan limits host artifact discovery to the exact module APK output root;
-- Gradle installation output must identify one APK basename, and host discovery must resolve that
-  identity to one contained APK;
+- the build plan limits host artifact and `output-metadata.json` sidecar discovery to the exact
+  module APK output root;
+- AGP output metadata must identify the exact variant and one contained `SINGLE` APK;
 - AAPT badging must provide one application ID and one unique ordinary or Leanback launcher
-  component; multiple APKs or launchers, missing metadata, malformed data, and truncated output all
+  component; split/multiple APKs or launchers, missing metadata, malformed data, and truncated output all
   fail closed; and
-- the plugin returns typed `android.apk.inspect` and `android.adb.launch` requests while the host
+- the plugin returns typed `android.apk.inspect`, `android.adb.install`, and
+  `android.adb.launch` requests while the host
   retains all execution and lifecycle authority.
 
 The plugin passes TypeScript checking, all 59 tests, and build verification. Against the real
