@@ -115,3 +115,28 @@ land in this order:
 
 The initial device-discovery release does not claim a debugger, Logcat, wireless pairing, emulator
 management, or full Android Studio Run parity.
+
+## Implementation checkpoint — 2026-10-16
+
+Plugin `0.3.0` adopts SDK `1.5.0` and implements AP4–AP5's first executable slice:
+
+- exact runnable `install<Variant>` tasks become stable module/variant configurations only when the
+  workspace has Android evidence;
+- `install<Variant>AndroidTest` is excluded from application Run;
+- the selected configuration is remembered through plugin-namespaced workspace state;
+- the install plan limits host artifact discovery to the exact module APK output root;
+- Gradle installation output must identify one APK basename, and host discovery must resolve that
+  identity to one contained APK;
+- AAPT badging must provide one application ID and one unique ordinary or Leanback launcher
+  component; multiple APKs or launchers, missing metadata, malformed data, and truncated output all
+  fail closed; and
+- the plugin returns typed `android.apk.inspect` and `android.adb.launch` requests while the host
+  retains all execution and lifecycle authority.
+
+The plugin passes TypeScript checking, all 59 tests, and build verification. Against the real
+FilesRecovery task catalog it projected 25 application configurations from 15,980 Gradle tasks;
+an existing flavor APK resolved to `com.photo.recovery.global.tt` and
+`com.files.recovery.page.SplashActivity` through final-artifact inspection. Host packaging,
+installation, and rendered smoke passed. Interactive install-and-launch remains the user's manual
+acceptance step; debugger, Logcat, split APKs, parallel Runs, and full Android Studio parity remain
+outside this release.
