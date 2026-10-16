@@ -39,6 +39,18 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
   references.add(staticManifest.taskAuthorization.workspaceTrust.descriptionKey);
   references.add(staticManifest.taskAuthorization.taskConfirmation.rememberLabelKey);
   references.add(staticManifest.taskAuthorization.taskConfirmation.rememberDescriptionKey);
+  for (const key of [
+    "panel.run",
+    "panel.tasks",
+    "panel.devices",
+    "device.status.online",
+    "device.status.offline",
+    "device.status.unauthorized",
+    "device.status.unknown",
+    "device.error.discovery",
+    "device.error.adbUnavailable",
+    "device.action.refresh",
+  ]) references.add(key);
   const defaultKeys = Object.keys(localization.locales[localization.defaultLocale]).sort();
   assert.deepEqual([...references].sort(), defaultKeys);
   assert.deepEqual(Object.keys(localization.locales["zh-CN"]).sort(), defaultKeys);

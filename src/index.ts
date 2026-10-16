@@ -12,6 +12,13 @@ export {
 } from "./plugin.ts";
 export { ANDROID_GRADLE_PLUGIN_MANIFEST } from "./manifest.ts";
 export {
+  ANDROID_DEVICE_DISCOVERY_LIMITS,
+  parseAndroidDevicesOutput,
+  type AndroidDeviceDescriptor,
+  type AndroidDeviceDiscoveryResult,
+  type AndroidDeviceStatus,
+} from "./devices.ts";
+export {
   ANDROID_GRADLE_COLLECTION_PROVIDER_ID,
   buildAndroidGradleTaskCollection,
 } from "./collection.ts";

@@ -26,3 +26,8 @@ recorded host compatibility change.
 The staged expansion from Gradle Tasks to the host-rendered Android workbench, including bounded
 ADB device discovery and future Run configurations, is documented in
 [`docs/android-workbench-plan.md`](docs/android-workbench-plan.md).
+
+The pure `parseAndroidDevicesOutput` helper parses the host-supplied, bounded output of
+`adb devices -l`. It accepts the normal daemon preamble and CRLF output, reports explicit
+online/offline/unauthorized/unknown states, and marks only online devices as selectable. It does
+not invoke adb or infer an online device when the output is incomplete or malformed.
