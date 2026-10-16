@@ -139,6 +139,7 @@ export function resolveAgpSingleApkArtifact(
   variant: string,
 ): SdkRunArtifact | null {
   if (!variant || variant.length > 256 || !/^[A-Za-z0-9_.-]+$/u.test(variant)) return null;
+  const agpVariantName = `${variant[0]!.toLowerCase()}${variant.slice(1)}`;
   const artifactByPath = new Map(
     artifacts.filter((artifact) => artifact.kind === "apk" && artifact.workspacePath.endsWith(".apk"))
       .map((artifact) => [artifact.workspacePath, artifact]),
@@ -147,7 +148,7 @@ export function resolveAgpSingleApkArtifact(
   for (const sidecar of sidecars) {
     if (!sidecar.workspacePath.endsWith("/output-metadata.json")) continue;
     const metadata = parseAgpOutputMetadata(decodeBase64Utf8(sidecar.dataBase64));
-    if (!metadata || metadata.variantName !== variant || metadata.outputFile.includes("/") || metadata.outputFile.includes("\\")) continue;
+    if (!metadata || metadata.variantName !== agpVariantName || metadata.outputFile.includes("/") || metadata.outputFile.includes("\\")) continue;
     const directory = sidecar.workspacePath.slice(0, sidecar.workspacePath.lastIndexOf("/") + 1);
     const artifact = artifactByPath.get(`${directory}${metadata.outputFile}`);
     if (artifact) matches.push(artifact);

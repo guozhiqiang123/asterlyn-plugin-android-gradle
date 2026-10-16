@@ -86,7 +86,7 @@ test("staged Run resolves AGP output metadata and installs on the selected devic
   const sidecars = [{
     workspacePath: "app/build/outputs/apk/demo/debug/output-metadata.json",
     byteLength: 160,
-    dataBase64: btoa(JSON.stringify({ artifactType: { type: "APK" }, variantName: "DemoDebug", elements: [{ type: "SINGLE", outputFile: "app-demo-debug.apk" }] })),
+    dataBase64: btoa(JSON.stringify({ artifactType: { type: "APK" }, variantName: "demoDebug", elements: [{ type: "SINGLE", outputFile: "app-demo-debug.apk" }] })),
   }];
   assert.deepEqual(plan.inspect([
     { workspacePath: "app/build/outputs/apk/demo/debug/app-demo-debug.apk", kind: "apk", byteLength: 1 },
@@ -150,12 +150,32 @@ test("AGP artifact resolution fails closed for mismatched, ambiguous, split, or 
     { workspacePath: "app/build/outputs/apk/demo/debug/app.apk", kind: "apk", byteLength: 1 },
   ];
   const sidecar = (metadata, path = "app/build/outputs/apk/demo/debug/output-metadata.json") => ({ workspacePath: path, byteLength: 1, dataBase64: btoa(JSON.stringify(metadata)) });
-  const single = sidecar({ artifactType: { type: "APK" }, variantName: "DemoDebug", elements: [{ type: "SINGLE", outputFile: "app.apk" }] });
+  const single = sidecar({ artifactType: { type: "APK" }, variantName: "demoDebug", elements: [{ type: "SINGLE", outputFile: "app.apk" }] });
   assert.equal(resolveAgpSingleApkArtifact(artifacts, [single], "DemoDebug"), artifacts[0]);
+  assert.equal(resolveAgpSingleApkArtifact(artifacts, [single], "demoDebug"), artifacts[0]);
   assert.equal(resolveAgpSingleApkArtifact(artifacts, [single], "Release"), null);
   assert.equal(resolveAgpSingleApkArtifact(artifacts, [single, single], "DemoDebug"), null);
   assert.equal(parseAgpOutputMetadata(JSON.stringify({ variantName: "DemoDebug", elements: [{ type: "SPLIT", outputFile: "app.apk" }] })), null);
   assert.equal(parseAgpOutputMetadata("{"), null);
+});
+
+test("AGP lower-camel variant metadata matches its capitalized Gradle task suffix", () => {
+  const artifact = {
+    workspacePath: "SuperBoost/build/outputs/apk/superboost/debug/SuperBoost-superboost-debug.apk",
+    kind: "apk",
+    byteLength: 74_532_166,
+  };
+  const sidecar = {
+    workspacePath: "SuperBoost/build/outputs/apk/superboost/debug/output-metadata.json",
+    byteLength: 1,
+    dataBase64: btoa(JSON.stringify({
+      artifactType: { type: "APK" },
+      variantName: "superboostDebug",
+      elements: [{ type: "SINGLE", outputFile: "SuperBoost-superboost-debug.apk" }],
+    })),
+  };
+
+  assert.equal(resolveAgpSingleApkArtifact([artifact], [sidecar], "SuperboostDebug"), artifact);
 });
 
 test("AAPT badging parsing supports aliases and rejects missing launch metadata", () => {

@@ -174,3 +174,17 @@ package exclusively from the already inspected APK, and returns the selected tar
 to `android.adb.uninstall`. All 60 plugin tests and the package build pass. Real FilesRecovery
 acceptance produced the expected signature conflict without uninstalling the retained application;
 the installed host now owns the explicit cancel-or-uninstall interaction.
+
+### AGP variant identity correction
+
+Gradle task names capitalize the first character of their variant suffix (`assembleSuperboostDebug`),
+while AGP writes the same variant to `output-metadata.json` in lower camel case
+(`superboostDebug`). Artifact selection normalizes only that task-name boundary before requiring an
+otherwise exact metadata match. It does not make module, variant, path, output type, or APK matching
+case-insensitive.
+
+The `superboost_lite` project is the regression case: `:SuperBoost:assembleSuperboostDebug`
+produces one `SINGLE` APK at
+`SuperBoost/build/outputs/apk/superboost/debug/SuperBoost-superboost-debug.apk`. The corrected
+resolver accepts that artifact and still rejects missing, duplicate, split, escaped, or differently
+named metadata.
