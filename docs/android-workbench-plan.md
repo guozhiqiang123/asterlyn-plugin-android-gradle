@@ -66,8 +66,9 @@ restored ID is invalid until it appears online in the current snapshot.
 
 - Derive module/variant/install-task candidates from the exact verified task snapshot.
 - Require explicit selection whenever more than one candidate exists.
-- Acquire application ID and launcher activity from an authoritative Android model, merged
-  manifest, or verified built artifact; build-file regexes are not final authority.
+- Acquire application ID and launcher component from the verified final APK after the selected
+  install task succeeds. Parse bounded output metadata and APK-manifest tool output, including
+  `activity-alias`; build-file regexes are not final authority.
 - Invalidate stale configurations when Gradle fingerprints or candidate identity changes.
 
 ### AP5 — supervised application Run
@@ -78,6 +79,15 @@ restored ID is invalid until it appears online in the current snapshot.
 - Launch through an admitted ADB operation using the exact current device serial and application
   component.
 - Map every terminal result into one deterministic run-session result and plugin notification.
+
+The first complete Run deliberately uses post-build authority: exact `install<Variant>`, final base
+APK inspection, fresh target validation, then exact component launch. A future Gradle project model
+may make package/component data visible before the first build, but it cannot replace final-
+artifact validation for the session being launched.
+
+The host SDK must provide staged Run, contained artifact resolution, and typed declared tool-
+operation contracts before this repository contributes an executable Run plan. This plugin never
+widens the fixed `adb.devices` process query or obtains a raw process/filesystem handle.
 
 ## ADB parsing contract
 
