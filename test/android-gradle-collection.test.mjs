@@ -18,8 +18,10 @@ test("builds deterministic root and nested-module Gradle hierarchy", () => {
   assert.equal(first.providerId, "gradle-tasks");
   assert.equal(first.truncated, false);
   assert.deepEqual(first.nodes.filter((node) => node.parentId === null).map(({ label, metadata }) => [label, metadata["android.gradle.nodeKind"]]), [
-    ["Tasks", "tasks"], ["app", "module"], ["feature", "module"],
+    ["help", "group"], ["app", "module"], ["feature", "module"],
   ]);
+  assert.equal(first.nodes.some((node) => node.metadata["android.gradle.nodeKind"] === "tasks"), false);
+  assert.deepEqual(first.nodes.filter((node) => node.parentId === first.nodes.find((candidate) => candidate.label === "app").id).map((node) => node.label), ["build", "install"]);
   assert.deepEqual(first.nodes.filter((node) => node.kind === "task").map(({ label, taskId }) => [label, taskId]), [
     [":help", ":help"], [":app:assembleDebug", ":app:assembleDebug"], [":app:installDebug", ":app:installDebug"], [":feature:assembleRelease", ":feature:assembleRelease"],
   ]);

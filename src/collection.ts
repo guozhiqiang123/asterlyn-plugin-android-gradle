@@ -25,35 +25,26 @@ export function buildAndroidGradleTaskCollection(snapshot: SdkTaskProviderSnapsh
   const orderedProjects = [...projects.values()].sort(compareProjects);
   orderedProjects.forEach((project, projectIndex) => {
     const projectId = project.projectPath === ":" ? "project.root" : stableId("project", project.projectPath);
-    const tasksId = `${projectId}.tasks`;
     if (project.projectPath !== ":") {
       nodes.push({
         id: projectId,
         parentId: null,
         label: project.projectPath.slice(1) || project.projectPath,
         kind: "group",
-        order: projectIndex,
+        order: projectIndex * 100_000,
         metadata: { "android.gradle.nodeKind": "module", "android.gradle.projectPath": project.projectPath },
       });
     }
-    nodes.push({
-      id: tasksId,
-      parentId: project.projectPath === ":" ? null : projectId,
-      label: "Tasks",
-      kind: "group",
-      order: project.projectPath === ":" ? projectIndex : 0,
-      metadata: { "android.gradle.nodeKind": "tasks", "android.gradle.projectPath": project.projectPath },
-    });
     [...project.groups.entries()]
       .sort(([left], [right]) => compareText(left, right))
       .forEach(([group, tasks], groupIndex) => {
-        const groupId = `${tasksId}.${stableId("group", group)}`;
+        const groupId = `${projectId}.${stableId("group", group)}`;
         nodes.push({
           id: groupId,
-          parentId: tasksId,
+          parentId: project.projectPath === ":" ? null : projectId,
           label: groupLabel(group),
           kind: "group",
-          order: groupIndex,
+          order: project.projectPath === ":" ? projectIndex * 100_000 + groupIndex : groupIndex,
           metadata: { "android.gradle.nodeKind": "group", "android.gradle.group": group },
         });
         [...tasks].sort((left, right) => compareText(left.id, right.id)).forEach((task, taskIndex) => {
