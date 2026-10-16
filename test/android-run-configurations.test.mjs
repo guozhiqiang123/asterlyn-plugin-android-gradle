@@ -5,11 +5,11 @@ import {
   androidRunConfigurationSnapshot,
   buildAndroidStagedRunPlan,
   deriveAndroidRunConfigurations,
-  isUpdateIncompatibleDeployment,
   parseAgpOutputMetadata,
   parseAndroidLaunchComponent,
   resolveAgpSingleApkArtifact,
 } from "../src/run-configurations.ts";
+import { isUpdateIncompatibleDeployment } from "../src/deployment-recovery.ts";
 
 const task = (id, runnable = true) => ({
   id,
@@ -70,7 +70,7 @@ test("restores a valid selected configuration and falls back deterministically",
   });
 });
 
-test("staged Run resolves AGP output metadata and installs on the selected device", () => {
+test("staged Run resolves AGP output metadata and installs on the selected device", async () => {
   const applied = [];
   const buildResults = [];
   const build = {
@@ -115,7 +115,7 @@ test("staged Run resolves AGP output metadata and installs on the selected devic
     exitCode: 1,
     error: null,
   };
-  assert.deepEqual(plan.recoverDeployment(inspection, incompatible), {
+  assert.deepEqual(await plan.recoverDeployment(inspection, incompatible), {
     confirmation: {
       titleKey: "run.recovery.uninstall.title",
       messageKey: "run.recovery.uninstall.message",

@@ -25,7 +25,6 @@ export {
   androidRunConfigurationSnapshot,
   buildAndroidStagedRunPlan,
   deriveAndroidRunConfigurations,
-  isUpdateIncompatibleDeployment,
   parseAgpOutputMetadata,
   parseAndroidLaunchComponent,
   resolveAgpSingleApkArtifact,

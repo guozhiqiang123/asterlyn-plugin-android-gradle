@@ -47,7 +47,7 @@
         "run.phase.recovering-deployment": "Removing the incompatible existing app…",
         "run.phase.launching": "Launching application…",
         "run.recovery.uninstall.title": "Replace the existing application?",
-        "run.recovery.uninstall.message": "The application already installed on the selected device was signed with a different certificate. It must be uninstalled before this build can be installed. Uninstalling will delete that application's local data.",
+        "run.recovery.uninstall.message": "The installed app has a different signature. It must be uninstalled before continuing. Uninstalling deletes its local data.",
         "run.recovery.uninstall.confirm": "Uninstall and continue",
         "run.recovery.uninstall.cancel": "Keep existing app",
         "settings.taskPresentation.label": "Task presentation",
