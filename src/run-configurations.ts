@@ -115,14 +115,15 @@ export function extractInstalledApkBasename(result: SdkTaskExecutionResult): str
     if (chunk === null) return null;
     text += chunk;
   }
-  let selected: string | null = null;
+  const installed = new Set<string>();
   const pattern = /Installing APK\s+['"]([^'"\r\n]+\.apk)['"]/giu;
   for (const match of text.matchAll(pattern)) {
     const path = match[1];
     if (!path) continue;
-    selected = path.replaceAll("\\", "/").split("/").at(-1) ?? null;
+    const basename = path.replaceAll("\\", "/").split("/").at(-1);
+    if (basename) installed.add(basename);
   }
-  return selected;
+  return installed.size === 1 ? [...installed][0] ?? null : null;
 }
 
 export function resolveInstalledApkArtifact(
@@ -140,7 +141,12 @@ export function resolveInstalledApkArtifact(
 /** Parse only AAPT's stable badging records; source manifests and Gradle files are not guessed. */
 export function parseAndroidLaunchComponent(output: string): AndroidLaunchComponent | null {
   const applicationId = output.match(/^package:\s+name='([^']+)'/mu)?.[1] ?? null;
-  const declaredActivity = output.match(/^launchable-activity:\s+name='([^']+)'/mu)?.[1] ?? null;
+  const activities = new Set(
+    [...output.matchAll(/^(?:launchable-activity|leanback-launchable-activity):\s+name='([^']+)'/gmu)]
+      .map((match) => match[1])
+      .filter((value): value is string => Boolean(value)),
+  );
+  const declaredActivity = activities.size === 1 ? [...activities][0] ?? null : null;
   if (!applicationId || !declaredActivity || !validAndroidName(applicationId)) return null;
   const activityName = declaredActivity.startsWith(".")
     ? `${applicationId}${declaredActivity}`

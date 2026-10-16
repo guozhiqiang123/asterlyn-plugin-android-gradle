@@ -108,6 +108,7 @@ test("artifact resolution fails closed for ambiguous, mismatched, or truncated i
   assert.equal(resolveInstalledApkArtifact(artifacts, "missing.apk"), null);
   assert.equal(resolveInstalledApkArtifact([artifacts[0]], null), artifacts[0]);
   assert.equal(extractInstalledApkBasename(result("Installing APK 'folder/app.apk'\n")), "app.apk");
+  assert.equal(extractInstalledApkBasename(result("Installing APK 'one.apk'\nInstalling APK 'two.apk'\n")), null);
   assert.equal(extractInstalledApkBasename({
     ...result(""),
     outputs: [
@@ -124,6 +125,12 @@ test("AAPT badging parsing supports aliases and rejects missing launch metadata"
     activityName: "com.example.LauncherAlias",
     component: "com.example/com.example.LauncherAlias",
   });
+  assert.deepEqual(parseAndroidLaunchComponent("package: name='com.example.tv'\nleanback-launchable-activity: name='.TvActivity'\n"), {
+    applicationId: "com.example.tv",
+    activityName: "com.example.tv.TvActivity",
+    component: "com.example.tv/com.example.tv.TvActivity",
+  });
+  assert.equal(parseAndroidLaunchComponent("package: name='com.example'\nlaunchable-activity: name='.One'\nlaunchable-activity: name='.Two'\n"), null);
   assert.equal(parseAndroidLaunchComponent("package: name='com.example'\n"), null);
   assert.equal(parseAndroidLaunchComponent("launchable-activity: name='.MainActivity'\n"), null);
 });
