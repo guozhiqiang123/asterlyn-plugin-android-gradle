@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.2.0");
+  assert.equal(packageJson.version, "0.3.0");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
@@ -21,8 +21,8 @@ test("package, static manifest, and executable module share one identity", () =>
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest, ANDROID_GRADLE_PLUGIN_MANIFEST);
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest.version, staticManifest.version);
   assert.equal(ANDROID_GRADLE_PLUGIN.sdkMajor, staticManifest.sdkMajor);
-  assert.equal(sdkPackageJson.version, "1.4.0");
-  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.4.0.tgz");
+  assert.equal(sdkPackageJson.version, "1.5.0");
+  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.5.0.tgz");
 });
 
 test("the static manifest owns complete English and Chinese plugin copy", () => {
@@ -61,13 +61,26 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
     "run.empty",
     "run.loading",
     "run.error",
+    "run.configuration.select",
+    "run.target.select",
     "run.configuration.androidApp",
     "run.configuration.incomplete",
+    "run.session.running",
+    "run.session.succeeded",
+    "run.session.failed",
+    "run.session.cancelled",
+    "run.session.crashed",
+    "run.phase.building",
+    "run.phase.resolving-artifact",
+    "run.phase.validating-target",
+    "run.phase.launching",
   ]) references.add(key);
   const defaultKeys = Object.keys(localization.locales[localization.defaultLocale]).sort();
   assert.deepEqual([...references].sort(), defaultKeys);
   assert.deepEqual(Object.keys(localization.locales["zh-CN"]).sort(), defaultKeys);
   assert.ok(staticManifest.capabilities.includes("taskAuthorization"));
+  assert.ok(staticManifest.capabilities.includes("toolOperations"));
   assert.equal(staticManifest.workspaceTool.defaultView, "tasks");
   assert.deepEqual(staticManifest.processQueries.map((query) => query.id), ["adb.devices"]);
+  assert.deepEqual(staticManifest.toolOperations.map((operation) => operation.id), ["android.apk.inspect", "android.adb.launch"]);
 });
