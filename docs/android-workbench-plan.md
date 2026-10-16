@@ -1,0 +1,107 @@
+# Android workbench evolution plan
+
+## Direction
+
+This repository evolves from a Gradle task provider into Asterlyn's Android development plugin.
+The user-facing name becomes **Android** while the stable identity remains
+`dev.asterlyn.android-gradle`. Existing enablement, settings, workspace trust, remembered task
+reviews, and task caches therefore remain valid.
+
+The plugin continues to depend only on `@asterlyn/plugin-sdk`. It does not import host source,
+Tauri, DOM, filesystem, Terminal, notification UI, or process APIs. Android behavior is expressed
+through bounded host capabilities and declarative contributions.
+
+## Ownership
+
+This repository owns:
+
+- Gradle/Android project matching;
+- Gradle task discovery, cache semantics, and hierarchical task data;
+- ADB output parsing and Android target semantics;
+- module/variant/run-configuration semantics;
+- application ID and launcher-activity acquisition;
+- build, install, and launch orchestration intent;
+- Android-specific settings, validation, copy, and localization; and
+- migrations for plugin-owned configuration/state schemas.
+
+The host owns:
+
+- process/tool admission, execution, timeout, cancellation, and child cleanup;
+- workspace identity and lifecycle;
+- namespaced bounded persistence;
+- workbench layout and all rendered controls;
+- configuration/target selection interaction;
+- Terminal tabs, output, notification presentation, accessibility, and theme; and
+- package admission, SDK compatibility, enablement, update, and rollback.
+
+## Delivery slices
+
+### AP1 — package identity and SDK adoption
+
+- Keep the existing plugin ID and package compatibility aliases.
+- Change localized name/description to Android development tooling.
+- Adopt the SDK revision that introduces workspace tools, execution targets, run configurations,
+  bounded process queries, and namespaced workspace state.
+
+### AP2 — ADB device discovery
+
+- Declare one exact `adb.devices` process query for `adb devices -l`.
+- Parse device serial, state, product/model/device/transport fields, and emulator identity.
+- Preserve offline and unauthorized targets as visible, non-selectable entries.
+- Bound line length, target count, metadata count, and total output.
+- Publish explicit loading, ready, unavailable, stale, and error snapshots.
+- Abort or ignore late results after dispose or workspace-generation replacement.
+
+Device snapshots are transient. Only an explicitly selected target ID may be stored, and every
+restored ID is invalid until it appears online in the current snapshot.
+
+### AP3 — Android workbench contribution
+
+- Contribute the Android tool identity and Run, Tasks, Devices views.
+- Reuse the existing Gradle task provider unchanged inside Tasks.
+- Supply semantic action availability; never supply markup, icon bytes, or CSS.
+- Keep task filtering, tree/flat state, disclosure, and execution under host ownership.
+
+### AP4 — run configurations
+
+- Derive module/variant/install-task candidates from the exact verified task snapshot.
+- Require explicit selection whenever more than one candidate exists.
+- Acquire application ID and launcher activity from an authoritative Android model, merged
+  manifest, or verified built artifact; build-file regexes are not final authority.
+- Invalidate stale configurations when Gradle fingerprints or candidate identity changes.
+
+### AP5 — supervised application Run
+
+- Return an orchestration plan; never execute a child process directly.
+- Validate configuration and target before Gradle execution and before launch.
+- Build/install through the reviewed Gradle task service.
+- Launch through an admitted ADB operation using the exact current device serial and application
+  component.
+- Map every terminal result into one deterministic run-session result and plugin notification.
+
+## ADB parsing contract
+
+The parser accepts LF or CRLF and ignores the normal daemon startup preamble. The first meaningful
+header is `List of devices attached`. Each following non-empty record begins with a serial and a
+state. Known states are `device`, `offline`, and `unauthorized`; unknown states remain visible as
+unknown and are not selectable.
+
+Recognized `key:value` fields are bounded plain text. Duplicate serials are resolved
+deterministically, preferring the least-operable state so ambiguous output cannot incorrectly mark
+a target online. Malformed or over-limit output returns an error snapshot rather than a partial
+selectable list.
+
+## Compatibility and release
+
+Every plugin release must pass TypeScript checks, unit/contract tests, package identity validation,
+and build output verification. The host pins one exact tarball and digest. SDK and plugin changes
+land in this order:
+
+1. host SDK release and fixture;
+2. plugin source update and release artifact;
+3. host artifact pin and adapter/UI rollout;
+4. installed native acceptance; and
+5. retained prior artifact rollback proof.
+
+The initial device-discovery release does not claim a debugger, Logcat, wireless pairing, emulator
+management, or full Android Studio Run parity.

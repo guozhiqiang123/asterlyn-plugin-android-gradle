@@ -1,6 +1,6 @@
-# Asterlyn Android / Gradle plugin
+# Asterlyn Android plugin
 
-Android and Gradle reference integration for Asterlyn's public plugin foundation. The repository
+Android development integration for Asterlyn's public plugin foundation. The repository
 currently builds a trusted ESM artifact that is pinned into the desktop host at build time; runtime
 third-party installation remains gated on the host's package-admission and isolation work.
 
@@ -22,3 +22,7 @@ the complete Gradle task tree. The plugin never probes the filesystem directly.
 Run `npm run verify` before producing an artifact. The checked-in SDK tarball pins the exact
 contract used by clean and offline builds; update it only together with `package-lock.json` and a
 recorded host compatibility change.
+
+The staged expansion from Gradle Tasks to the host-rendered Android workbench, including bounded
+ADB device discovery and future Run configurations, is documented in
+[`docs/android-workbench-plan.md`](docs/android-workbench-plan.md).
