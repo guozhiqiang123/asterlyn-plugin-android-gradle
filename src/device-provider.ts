@@ -18,6 +18,7 @@ export function createAndroidDeviceProvider(context: SdkPluginActivationContext)
   const listeners = new Set<() => void>();
   let disposed = false;
   let revision = 0;
+  let refreshInFlight: Promise<void> | null = null;
   let selectedTargetId: string | null = null;
   let snapshot: SdkExecutionTargetProviderSnapshot = context.processQueries
     ? { status: "loading", targets: [], selectedTargetId: null }
@@ -27,7 +28,7 @@ export function createAndroidDeviceProvider(context: SdkPluginActivationContext)
     if (disposed) return;
     for (const listener of listeners) listener();
   };
-  const refresh = async () => {
+  const refreshOnce = async () => {
     if (disposed || !context.processQueries) return;
     const current = ++revision;
     snapshot = { ...snapshot, status: "loading", error: undefined };
@@ -77,6 +78,14 @@ export function createAndroidDeviceProvider(context: SdkPluginActivationContext)
       };
       publish();
     }
+  };
+  const refresh = (): Promise<void> => {
+    if (refreshInFlight) return refreshInFlight;
+    const tracked = refreshOnce().finally(() => {
+      if (refreshInFlight === tracked) refreshInFlight = null;
+    });
+    refreshInFlight = tracked;
+    return tracked;
   };
 
   const contribution: SdkExecutionTargetProviderContribution = Object.freeze({

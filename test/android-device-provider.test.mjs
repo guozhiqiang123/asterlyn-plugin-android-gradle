@@ -57,6 +57,35 @@ test("device provider exposes host query failures without stale targets", async 
   runtime.dispose();
 });
 
+test("device provider coalesces repeated refreshes into one bounded query", async () => {
+  let calls = 0;
+  let complete = null;
+  const runtime = createAndroidDeviceProvider({
+    processQueries: {
+      execute: () => {
+        calls += 1;
+        return new Promise((resolve) => { complete = resolve; });
+      },
+    },
+  });
+  runtime.start();
+  await waitFor(() => calls === 1);
+  const first = runtime.contribution.refresh();
+  const second = runtime.contribution.refresh();
+  assert.equal(first, second);
+  assert.equal(calls, 1);
+  complete({
+    status: "succeeded",
+    stdout: "List of devices attached\n",
+    stderr: "",
+    truncated: false,
+    error: null,
+  });
+  await first;
+  assert.equal(runtime.contribution.snapshot().status, "ready");
+  runtime.dispose();
+});
+
 async function waitFor(predicate) {
   for (let index = 0; index < 50; index += 1) {
     if (predicate()) return;
