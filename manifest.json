@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -21,6 +21,8 @@
         "device.error.discovery": "Unable to discover Android devices.",
         "device.error.adbUnavailable": "ADB is unavailable.",
         "device.action.refresh": "Refresh devices",
+        "run.configuration.androidApp": "Android app",
+        "run.configuration.incomplete": "Run is unavailable until the plugin can authoritatively resolve the application ID and launcher activity.",
         "settings.taskPresentation.label": "Task presentation",
         "settings.taskPresentation.description": "Choose the task tree shown in the Tasks tool window.",
         "settings.taskPresentation.allTasksTree": "All tasks tree",
@@ -43,6 +45,8 @@
         "device.error.discovery": "无法发现 Android 设备。",
         "device.error.adbUnavailable": "ADB 不可用。",
         "device.action.refresh": "刷新设备",
+        "run.configuration.androidApp": "Android 应用",
+        "run.configuration.incomplete": "插件尚未可靠解析应用 ID 和启动 Activity，因此暂不能运行。",
         "settings.taskPresentation.label": "任务展示方式",
         "settings.taskPresentation.description": "选择任务窗口中显示的任务树。",
         "settings.taskPresentation.allTasksTree": "完整任务树",
@@ -76,5 +80,28 @@
       "rememberDescriptionKey": "authorization.rememberTask.description"
     }
   },
-  "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization"]
+  "workspaceTool": {
+    "id": "android",
+    "titleKey": "name",
+    "icon": "device",
+    "views": [
+      { "id": "run", "labelKey": "panel.run" },
+      { "id": "tasks", "labelKey": "panel.tasks" },
+      { "id": "devices", "labelKey": "panel.devices" }
+    ],
+    "defaultView": "tasks"
+  },
+  "processQueries": [{
+    "id": "adb.devices",
+    "args": ["devices", "-l"],
+    "timeoutMs": 10000,
+    "maxOutputBytes": 262144,
+    "executables": [
+      { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
+      { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
+      { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
+      { "type": "path", "name": "adb" }
+    ]
+  }],
+  "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization", "processQueries", "workspaceState", "executionTargets", "runConfigurations"]
 }

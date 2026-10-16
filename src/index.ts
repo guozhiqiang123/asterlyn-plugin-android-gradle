@@ -18,6 +18,7 @@ export {
   type AndroidDeviceDiscoveryResult,
   type AndroidDeviceStatus,
 } from "./devices.ts";
+export { createAndroidDeviceProvider, type AndroidDeviceProviderRuntime } from "./device-provider.ts";
 export {
   ANDROID_GRADLE_COLLECTION_PROVIDER_ID,
   buildAndroidGradleTaskCollection,

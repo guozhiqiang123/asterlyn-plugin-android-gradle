@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.1.7");
+  assert.equal(packageJson.version, "0.2.0");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
@@ -21,8 +21,8 @@ test("package, static manifest, and executable module share one identity", () =>
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest, ANDROID_GRADLE_PLUGIN_MANIFEST);
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest.version, staticManifest.version);
   assert.equal(ANDROID_GRADLE_PLUGIN.sdkMajor, staticManifest.sdkMajor);
-  assert.equal(sdkPackageJson.version, "1.2.0");
-  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.2.0.tgz");
+  assert.equal(sdkPackageJson.version, "1.4.0");
+  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.4.0.tgz");
 });
 
 test("the static manifest owns complete English and Chinese plugin copy", () => {
@@ -39,6 +39,8 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
   references.add(staticManifest.taskAuthorization.workspaceTrust.descriptionKey);
   references.add(staticManifest.taskAuthorization.taskConfirmation.rememberLabelKey);
   references.add(staticManifest.taskAuthorization.taskConfirmation.rememberDescriptionKey);
+  references.add(staticManifest.workspaceTool.titleKey);
+  for (const view of staticManifest.workspaceTool.views) references.add(view.labelKey);
   for (const key of [
     "panel.run",
     "panel.tasks",
@@ -50,9 +52,13 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
     "device.error.discovery",
     "device.error.adbUnavailable",
     "device.action.refresh",
+    "run.configuration.androidApp",
+    "run.configuration.incomplete",
   ]) references.add(key);
   const defaultKeys = Object.keys(localization.locales[localization.defaultLocale]).sort();
   assert.deepEqual([...references].sort(), defaultKeys);
   assert.deepEqual(Object.keys(localization.locales["zh-CN"]).sort(), defaultKeys);
   assert.ok(staticManifest.capabilities.includes("taskAuthorization"));
+  assert.equal(staticManifest.workspaceTool.defaultView, "tasks");
+  assert.deepEqual(staticManifest.processQueries.map((query) => query.id), ["adb.devices"]);
 });

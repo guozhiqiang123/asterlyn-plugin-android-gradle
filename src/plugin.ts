@@ -29,6 +29,7 @@ import { withQuickAction } from "./sdk-compat.ts";
 import type { SdkTaskProviderCacheMetadata } from "@asterlyn/plugin-sdk";
 import { buildAndroidGradleTaskCollection } from "./collection.ts";
 import { ANDROID_GRADLE_PLUGIN_MANIFEST } from "./manifest.ts";
+import { createAndroidDeviceProvider } from "./device-provider.ts";
 
 export const ANDROID_GRADLE_PLUGIN_ID = ANDROID_GRADLE_PLUGIN_MANIFEST.id;
 
@@ -48,8 +49,9 @@ interface AndroidProviderContribution {
 /**
  * First-party Android/Gradle integration descriptor.
  *
- * Activation starts no process. Explicit refresh returns a typed discovery plan;
- * only the host can review, authorize, execute, cancel, and return its bounded result.
+ * Gradle activation starts no Gradle process. Device discovery uses the host's
+ * separately admitted, bounded process-query capability. Only the host owns
+ * executable resolution, lifecycle, timeout, and output limits.
  */
 export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
   sdkMajor: ANDROID_GRADLE_PLUGIN_MANIFEST.sdkMajor,
@@ -207,6 +209,28 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
     const commandDisposable = context.contribute({
       kind: "command", id: "refresh-gradle-tasks", providerId: "gradle-tasks", title: () => "Gradle", detail: () => "Gradle", execute: () => undefined,
     });
+    const devices = createAndroidDeviceProvider(context);
+    const deviceDisposable = context.contribute(devices.contribution);
+    const runConfigurationDisposable = context.contribute({
+      kind: "run-configuration-provider",
+      id: "android-run-configurations",
+      snapshot: () => ({
+        status: "ready",
+        configurations: [{
+          id: "android-app",
+          label: "Android app",
+          detail: "Run is unavailable until the application ID and launcher activity are resolved authoritatively.",
+          status: "incomplete",
+          targetProviderId: "android-devices",
+          metadata: {
+            labelKey: "run.configuration.androidApp",
+            detailKey: "run.configuration.incomplete",
+          },
+        }],
+        selectedConfigurationId: "android-app",
+      }),
+    });
+    devices.start();
     if (cache) void restoreFromCache(revision);
 
     async function restoreFromCache(restoreRevision: number): Promise<void> {
@@ -289,6 +313,9 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
         listeners.clear();
         void providerDisposable.dispose();
         void commandDisposable.dispose();
+        devices.dispose();
+        void deviceDisposable.dispose();
+        void runConfigurationDisposable.dispose();
       },
     };
   },
