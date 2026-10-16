@@ -205,11 +205,11 @@
         { "type": "literal", "value": "-s" },
         { "type": "parameter", "name": "target" },
         { "type": "literal", "value": "uninstall" },
-        { "type": "parameter", "name": "applicationId" }
+        { "type": "parameter", "name": "application" }
       ],
       "parameters": [
         { "name": "target", "kind": "executionTargetId" },
-        { "name": "applicationId", "kind": "androidApplicationId" }
+        { "name": "application", "kind": "androidApplicationId" }
       ],
       "timeoutMs": 15000,
       "maxOutputBytes": 262144,

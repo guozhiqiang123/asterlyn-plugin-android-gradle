@@ -129,7 +129,7 @@ export function buildAndroidStagedRunPlan(
         },
         operation: {
           operationId: "android.adb.uninstall",
-          parameters: { target: targetId, applicationId: launch.applicationId },
+          parameters: { target: targetId, application: launch.applicationId },
         },
       };
     },

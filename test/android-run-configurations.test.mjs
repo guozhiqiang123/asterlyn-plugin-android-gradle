@@ -125,7 +125,7 @@ test("staged Run resolves AGP output metadata and installs on the selected devic
     },
     operation: {
       operationId: "android.adb.uninstall",
-      parameters: { target: "emulator-5554", applicationId: "com.example.demo" },
+      parameters: { target: "emulator-5554", application: "com.example.demo" },
     },
   });
   assert.deepEqual(plan.launch(inspection), {
