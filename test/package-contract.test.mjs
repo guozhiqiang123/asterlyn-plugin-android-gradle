@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.5.0");
+  assert.equal(packageJson.version, "0.5.1");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
@@ -63,6 +63,8 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
     "run.error",
     "run.configuration.select",
     "run.target.select",
+    "run.action.start",
+    "run.action.stop",
     "run.configuration.androidApp",
     "run.configuration.incomplete",
     "run.session.running",

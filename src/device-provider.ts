@@ -65,7 +65,9 @@ export function createAndroidDeviceProvider(context: SdkPluginActivationContext)
         selectable: device.selectable,
         metadata: Object.freeze({ ...device.metadata, serial: device.serial, emulator: String(device.emulator) }),
       }));
-      if (!targets.some((target) => target.id === selectedTargetId && target.selectable)) selectedTargetId = null;
+      if (!targets.some((target) => target.id === selectedTargetId && target.selectable)) {
+        selectedTargetId = targets.find((target) => target.status === "online" && target.selectable)?.id ?? null;
+      }
       snapshot = { status: "ready", targets: Object.freeze(targets), selectedTargetId };
       publish();
     } catch (error) {

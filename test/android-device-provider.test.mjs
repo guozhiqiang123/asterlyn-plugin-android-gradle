@@ -57,6 +57,28 @@ test("device provider exposes host query failures without stale targets", async 
   runtime.dispose();
 });
 
+test("device provider selects the first online device when no remembered target is usable", async () => {
+  const runtime = createAndroidDeviceProvider({
+    processQueries: {
+      execute: async () => ({
+        status: "succeeded",
+        stdout: "List of devices attached\noffline-1 unauthorized usb:1\nphone-2 device model:Pixel_9 transport_id:2\nphone-3 device model:Pixel_10 transport_id:3\n",
+        stderr: "",
+        truncated: false,
+        error: null,
+      }),
+    },
+    workspaceState: {
+      read: async () => "missing-device",
+      write: async () => undefined,
+    },
+  });
+  runtime.start();
+  await waitFor(() => runtime.contribution.snapshot().status === "ready");
+  assert.equal(runtime.contribution.snapshot().selectedTargetId, "phone-2");
+  runtime.dispose();
+});
+
 test("device provider coalesces repeated refreshes into one bounded query", async () => {
   let calls = 0;
   let complete = null;
