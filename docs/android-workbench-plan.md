@@ -156,3 +156,14 @@ Plugin `0.4.0` adopts SDK `1.6.0` and corrects the Run boundary:
 - the plugin requests `android.adb.install` with the selected target and exact workspace APK before
   requesting component launch; and
 - split or ambiguous outputs fail closed until target-aware multi-APK selection is implemented.
+
+### Signature-conflict recovery
+
+When the exact-device install result contains the bounded
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` code, the plugin may return one declarative recovery request.
+It uses the application ID already proven by AAPT inspection and the selected target already bound
+to the deployment request. The host must present a destructive confirmation explaining that
+uninstall removes the existing app and local data. Approval invokes only the admitted
+`android.adb.uninstall` operation, after which the host retries the same APK once; cancellation or
+any other install failure ends Run without uninstalling. The plugin never calls ADB or host UI
+directly.
