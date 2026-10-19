@@ -1,9 +1,12 @@
 {
   "name": "@asterlyn/plugin-android-gradle",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "private": true,
   "type": "module",
-  "files": ["dist", "manifest.json"],
+  "files": [
+    "dist",
+    "manifest.json"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

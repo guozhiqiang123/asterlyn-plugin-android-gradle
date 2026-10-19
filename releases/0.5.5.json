@@ -1,0 +1,9 @@
+{
+  "version": "0.5.5",
+  "summary": "Align the Android plugin Release with the first public external-plugin host baseline.",
+  "changes": [
+    "Require Asterlyn 0.1.12, the first host Release containing the canonical package inspector.",
+    "Pin the host checkout, build toolchain, and every publishing action to immutable versions.",
+    "Run Android runtime parity with explicit plugin and host versions before publishing the asset."
+  ]
+}
