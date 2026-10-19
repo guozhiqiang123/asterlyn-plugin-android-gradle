@@ -33,7 +33,7 @@ jobs:
         run: |
           set -- release/*.asterlyn-plugin.tgz
           test "$#" -eq 1
-          ASTERLYN_ANDROID_PLUGIN_PACKAGE="$1" cargo test --manifest-path host/Cargo.toml -p asterlyn-plugin-host --test android_release_parity -- --ignored
+          ASTERLYN_ANDROID_PLUGIN_PACKAGE="$(realpath "$1")" cargo test --manifest-path host/Cargo.toml -p asterlyn-plugin-host --test android_release_parity -- --ignored
       - name: Inspect with the host validator
         env:
           ASTERLYN_HOST_CHECKOUT: ${{ github.workspace }}/host
