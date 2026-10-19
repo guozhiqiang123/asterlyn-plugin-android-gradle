@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -247,5 +247,13 @@
       ]
     }
   ],
-  "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization", "processQueries", "toolOperations", "workspaceState", "executionTargets", "runConfigurations"]
+  "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization", "processQueries", "toolOperations", "workspaceState", "executionTargets", "runConfigurations"],
+  "permissions": ["host.workspace.catalog.read", "host.tasks.discover", "host.tasks.execute", "host.tasks.cache", "host.process.query", "host.tool.execute", "host.workspace.state", "host.execution-targets.read"],
+  "distribution": {
+    "repository": "guozhiqiang123/asterlyn-plugin-android-gradle",
+    "runtime": { "protocol": 1, "entry": "runtime/plugin.js" },
+    "hostCompatibility": { "minimum": "0.1.11", "maximumExclusive": "0.2.0" },
+    "license": { "expression": "MIT", "file": "LICENSE" },
+    "integrity": {}
+  }
 }

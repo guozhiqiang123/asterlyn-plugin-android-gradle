@@ -1,0 +1,46 @@
+name: Release plugin package
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: guozhiqiang123/asterlyn
+          path: host
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify tag identity
+        if: startsWith(github.ref, 'refs/tags/')
+        run: test "${GITHUB_REF_NAME}" = "v$(node -p "require('./package.json').version")"
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run package:release
+      - name: Inspect with the host validator
+        env:
+          ASTERLYN_HOST_CHECKOUT: ${{ github.workspace }}/host
+        run: npm run package:inspect
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-gradle-plugin-package
+          path: |
+            release/*.asterlyn-plugin.tgz
+            release/release-summary.json
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          generate_release_notes: true
+          files: release/*.asterlyn-plugin.tgz

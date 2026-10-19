@@ -1,6 +1,6 @@
 {
   "name": "@asterlyn/plugin-android-gradle",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "private": true,
   "type": "module",
   "files": ["dist", "manifest.json"],
@@ -14,12 +14,17 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
+    "package:release": "node scripts/build-release-package.mjs",
+    "package:inspect": "node scripts/inspect-release-package.mjs",
+    "release:verify": "npm run verify && npm run package:release && npm run package:inspect",
     "test": "node --test test/*.test.mjs",
     "verify": "npm run check && npm test && npm run build"
   },
   "devDependencies": {
-    "@asterlyn/plugin-sdk": "file:vendor/asterlyn-plugin-sdk-1.7.0.tgz",
+    "@asterlyn/plugin-sdk": "file:vendor/asterlyn-plugin-sdk-1.8.0.tgz",
     "@types/node": "22.20.2",
+    "esbuild": "0.28.2",
+    "tar": "7.5.22",
     "typescript": "^7.0.2"
   }
 }

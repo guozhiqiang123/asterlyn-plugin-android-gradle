@@ -1,0 +1,9 @@
+{
+  "version": "0.5.4",
+  "summary": "Publish the Android plugin as a schema-2 Asterlyn marketplace package.",
+  "changes": [
+    "Pin plugin SDK 1.8.0 and declare host capabilities and permissions.",
+    "Build one self-contained runtime bundle with a generated integrity table.",
+    "Validate and publish the GitHub Release asset through the host's canonical validator."
+  ]
+}
