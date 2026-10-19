@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.5.5");
+  assert.equal(packageJson.version, "0.5.6");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
@@ -21,8 +21,8 @@ test("package, static manifest, and executable module share one identity", () =>
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest, ANDROID_GRADLE_PLUGIN_MANIFEST);
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest.version, staticManifest.version);
   assert.equal(ANDROID_GRADLE_PLUGIN.sdkMajor, staticManifest.sdkMajor);
-  assert.equal(sdkPackageJson.version, "1.8.0");
-  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.8.0.tgz");
+  assert.equal(sdkPackageJson.version, "1.9.0");
+  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.9.0.tgz");
   assert.equal(staticManifest.schemaVersion, 2);
   assert.equal(staticManifest.distribution.repository, "guozhiqiang123/asterlyn-plugin-android-gradle");
   assert.equal(staticManifest.distribution.runtime.entry, "runtime/plugin.js");
