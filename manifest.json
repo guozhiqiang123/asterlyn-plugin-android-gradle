@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -146,114 +146,19 @@
     ],
     "defaultView": "tasks"
   },
-  "processQueries": [{
-    "id": "adb.devices",
-    "args": ["devices", "-l"],
-    "timeoutMs": 10000,
-    "maxOutputBytes": 262144,
-    "executables": [
-      { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
-      { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
-      { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
-      { "type": "path", "name": "adb" }
-    ]
-  }],
-  "toolOperations": [
-    {
-      "id": "android.apk.inspect",
-      "intent": "query",
-      "args": [
-        { "type": "literal", "value": "dump" },
-        { "type": "literal", "value": "badging" },
-        { "type": "parameter", "name": "artifact" }
-      ],
-      "parameters": [
-        { "name": "artifact", "kind": "workspaceArtifact", "suffixes": [".apk"] }
-      ],
-      "timeoutMs": 15000,
-      "maxOutputBytes": 262144,
-      "executables": [
-        { "type": "androidSdkBuildTools", "name": "aapt" },
-        { "type": "path", "name": "aapt" }
-      ]
-    },
-    {
-      "id": "android.adb.install",
-      "intent": "mutation",
-      "args": [
-        { "type": "literal", "value": "-s" },
-        { "type": "parameter", "name": "target" },
-        { "type": "literal", "value": "install" },
-        { "type": "literal", "value": "-r" },
-        { "type": "parameter", "name": "artifact" }
-      ],
-      "parameters": [
-        { "name": "target", "kind": "executionTargetId" },
-        { "name": "artifact", "kind": "workspaceArtifact", "suffixes": [".apk"] }
-      ],
-      "timeoutMs": 300000,
-      "maxOutputBytes": 262144,
-      "executables": [
-        { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
-        { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
-        { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
-        { "type": "path", "name": "adb" }
-      ]
-    },
-    {
-      "id": "android.adb.uninstall",
-      "intent": "mutation",
-      "args": [
-        { "type": "literal", "value": "-s" },
-        { "type": "parameter", "name": "target" },
-        { "type": "literal", "value": "uninstall" },
-        { "type": "parameter", "name": "application" }
-      ],
-      "parameters": [
-        { "name": "target", "kind": "executionTargetId" },
-        { "name": "application", "kind": "androidApplicationId" }
-      ],
-      "timeoutMs": 15000,
-      "maxOutputBytes": 262144,
-      "executables": [
-        { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
-        { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
-        { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
-        { "type": "path", "name": "adb" }
-      ]
-    },
-    {
-      "id": "android.adb.launch",
-      "intent": "mutation",
-      "args": [
-        { "type": "literal", "value": "-s" },
-        { "type": "parameter", "name": "target" },
-        { "type": "literal", "value": "shell" },
-        { "type": "literal", "value": "am" },
-        { "type": "literal", "value": "start" },
-        { "type": "literal", "value": "-n" },
-        { "type": "parameter", "name": "component" }
-      ],
-      "parameters": [
-        { "name": "target", "kind": "executionTargetId" },
-        { "name": "component", "kind": "androidComponent" }
-      ],
-      "timeoutMs": 15000,
-      "maxOutputBytes": 262144,
-      "executables": [
-        { "type": "workspaceProperty", "path": "local.properties", "key": "sdk.dir", "relativePath": "platform-tools/adb" },
-        { "type": "environment", "variable": "ANDROID_SDK_ROOT", "relativePath": "platform-tools/adb" },
-        { "type": "environment", "variable": "ANDROID_HOME", "relativePath": "platform-tools/adb" },
-        { "type": "path", "name": "adb" }
-      ]
-    }
+  "hostOperations": [
+    { "id": "adb.devices" },
+    { "id": "android.apk.inspect" },
+    { "id": "android.adb.install" },
+    { "id": "android.adb.uninstall" },
+    { "id": "android.adb.launch" }
   ],
   "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization", "processQueries", "toolOperations", "workspaceState", "executionTargets", "runConfigurations"],
   "permissions": ["host.workspace.catalog.read", "host.tasks.discover", "host.tasks.execute", "host.tasks.cache", "host.process.query", "host.tool.execute", "host.workspace.state", "host.execution-targets.read"],
   "distribution": {
     "repository": "guozhiqiang123/asterlyn-plugin-android-gradle",
     "runtime": { "protocol": 1, "entry": "runtime/plugin.js" },
-    "hostCompatibility": { "minimum": "0.1.13", "maximumExclusive": "0.2.0" },
+    "hostCompatibility": { "minimum": "0.1.15", "maximumExclusive": "0.2.0" },
     "license": { "expression": "MIT", "file": "LICENSE" },
     "integrity": {}
   }

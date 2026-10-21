@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.5.7");
+  assert.equal(packageJson.version, "0.5.8");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
@@ -21,9 +21,9 @@ test("package, static manifest, and executable module share one identity", () =>
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest, ANDROID_GRADLE_PLUGIN_MANIFEST);
   assert.equal(ANDROID_GRADLE_PLUGIN.manifest.version, staticManifest.version);
   assert.equal(ANDROID_GRADLE_PLUGIN.sdkMajor, staticManifest.sdkMajor);
-  assert.equal(sdkPackageJson.version, "1.9.0");
-  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.9.0.tgz");
-  assert.equal(staticManifest.schemaVersion, 2);
+  assert.equal(sdkPackageJson.version, "1.10.0");
+  assert.equal(packageJson.devDependencies["@asterlyn/plugin-sdk"], "file:vendor/asterlyn-plugin-sdk-1.10.0.tgz");
+  assert.equal(staticManifest.schemaVersion, 3);
   assert.equal(staticManifest.distribution.repository, "guozhiqiang123/asterlyn-plugin-android-gradle");
   assert.equal(staticManifest.distribution.runtime.entry, "runtime/plugin.js");
   assert.deepEqual(staticManifest.distribution.integrity, {});
@@ -95,6 +95,13 @@ test("the static manifest owns complete English and Chinese plugin copy", () => 
   assert.ok(staticManifest.capabilities.includes("toolOperations"));
   assert.equal(staticManifest.workspaceTool.defaultView, "tasks");
   assert.deepEqual(staticManifest.workspaceTool.views.map((view) => view.id), ["run", "tasks"]);
-  assert.deepEqual(staticManifest.processQueries.map((query) => query.id), ["adb.devices"]);
-  assert.deepEqual(staticManifest.toolOperations.map((operation) => operation.id), ["android.apk.inspect", "android.adb.install", "android.adb.uninstall", "android.adb.launch"]);
+  assert.equal("processQueries" in staticManifest, false);
+  assert.equal("toolOperations" in staticManifest, false);
+  assert.deepEqual(staticManifest.hostOperations.map((operation) => operation.id), [
+    "adb.devices",
+    "android.apk.inspect",
+    "android.adb.install",
+    "android.adb.uninstall",
+    "android.adb.launch",
+  ]);
 });
