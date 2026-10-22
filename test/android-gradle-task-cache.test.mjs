@@ -23,13 +23,24 @@ test("cache codec round-trips declarative tasks and strips run state", () => {
 test("cache codec rejects schema identity, malformed payload, and oversized task metadata", () => {
   const encoded = encodeAndroidGradleCachePayload([task], "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks");
   assert.equal(decodeAndroidGradleCachePayload(`${encoded.slice(0, -2)}!!`, "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks"), null);
-  assert.equal(decodeAndroidGradleCachePayload(btoa(JSON.stringify({ schemaVersion: 2, tasks: [] })), "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks"), null);
+  assert.equal(decodeAndroidGradleCachePayload(btoa(JSON.stringify({ schemaVersion: 1, tasks: [] })), "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks"), null);
   const duplicate = JSON.parse(atob(encoded));
   duplicate.tasks.push(duplicate.tasks[0]);
   assert.equal(decodeAndroidGradleCachePayload(btoa(JSON.stringify(duplicate)), "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks"), null);
   const liveState = JSON.parse(atob(encoded));
-  liveState.tasks[0].runState = "succeeded";
+  liveState.tasks[0].push("unexpected");
   assert.equal(decodeAndroidGradleCachePayload(btoa(JSON.stringify(liveState)), "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks"), null);
+});
+
+test("cache codec keeps large task catalogs compact", () => {
+  const tasks = Array.from({ length: 19_500 }, (_, index) => {
+    const id = `:feature-module-${index}:assembleProductionRelease`;
+    return { id, label: id, group: "Build tasks", projectPath: `:feature-module-${index}`,
+      description: `Assembles the production release artifact for feature module ${index}.`, runnable: false };
+  });
+  const encoded = encodeAndroidGradleCachePayload(tasks, "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks");
+  assert.ok(encoded.length < 4 * 1024 * 1024, `compact cache grew to ${encoded.length} bytes`);
+  assert.equal(decodeAndroidGradleCachePayload(encoded, "dev.asterlyn.android-gradle", "0.1.0", "gradle-tasks")?.length, tasks.length);
 });
 
 test("fingerprint catalog is bounded to Gradle and Android configuration paths", () => {

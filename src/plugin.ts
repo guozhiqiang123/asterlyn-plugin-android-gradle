@@ -16,8 +16,8 @@ import {
   buildGradleWrapperRequest,
   parseGradleTasksOutput,
 } from "./discovery.ts";
-import { applyGradleTaskResult, buildGradleTaskRunPlan, runnableGradleSnapshot, setGradleTaskRunState } from "./execution.ts";
-import { deriveGradleQuickActions, gradleTaskArtifactHints } from "./quick-actions.ts";
+import { applyGradleTaskResult, buildGradleTaskRunPlan, setGradleTaskRunState } from "./execution.ts";
+import { gradleTaskArtifactHints, withGradleQuickActions } from "./quick-actions.ts";
 import {
   decodeAndroidGradleCachePayload,
   encodeAndroidGradleCachePayload,
@@ -25,11 +25,11 @@ import {
   intersectsFingerprintPaths,
 } from "./task-cache.ts";
 import type { TaskDescriptor, GradleTaskDescriptor, GradleTaskDiscoveryResult, PluginTaskExecutionResult, PluginTaskRefreshPlan, PluginTaskRunPlan } from "./sdk-compat.ts";
-import { withQuickAction } from "./sdk-compat.ts";
 import type { SdkTaskProviderCacheMetadata } from "@asterlyn/plugin-sdk";
 import { buildAndroidGradleTaskCollection } from "./collection.ts";
 import { ANDROID_GRADLE_PLUGIN_MANIFEST } from "./manifest.ts";
 import { createAndroidDeviceProvider } from "./device-provider.ts";
+import { decodeBase64Bytes } from "./runtime-codecs.ts";
 import {
   ANDROID_RUN_CONFIGURATION_PROVIDER_ID,
   androidRunConfigurationSnapshot,
@@ -154,14 +154,14 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
             for (const output of result.outputs) {
               if (output.stream !== "stdout") continue;
               try {
-                const binary = atob(output.dataBase64);
-                byteLength += binary.length;
+                const bytes = decodeBase64Bytes(output.dataBase64);
+                byteLength += bytes.byteLength;
                 if (byteLength > ANDROID_GRADLE_DISCOVERY_LIMITS.maxOutputBytes) {
                   snapshot = { status: "error", tasks: disableTasks(retainedTasks), cache: metadata("stale", "refresh-failed"), error: "Gradle task discovery output exceeded the discovery limit." };
                   publish();
                   return;
                 }
-                chunks.push(Uint8Array.from(binary, (character) => character.charCodeAt(0)));
+                chunks.push(bytes);
               } catch {
                 snapshot = { status: "error", tasks: disableTasks(retainedTasks), cache: metadata("stale", "refresh-failed"), error: "Gradle task discovery output was invalid." };
                 publish();
@@ -177,8 +177,8 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
               publish();
               return;
             }
-            const discovered = withGradleQuickActions(runnableGradleSnapshot(parsed));
-            snapshot = { ...discovered, tasks: discovered.tasks.map((task) => ({ ...task, runnable: false })), ...(cache ? { cache: metadata("validating", undefined, discovered.tasks.length) } : {}) };
+            const discovered = { ...parsed, tasks: withGradleQuickActions(parsed.tasks) };
+            snapshot = { ...discovered, ...(cache ? { cache: metadata("validating", undefined, discovered.tasks.length) } : {}) };
             publish();
             if (cache) void finalizeRefresh(discovered.tasks, refreshRevision);
           },
@@ -346,17 +346,6 @@ export const ANDROID_GRADLE_PLUGIN: SdkPluginModule = Object.freeze({
   },
 });
 
-function withGradleQuickActions(snapshot: GradleTaskDiscoveryResult): GradleTaskDiscoveryResult {
-  if (snapshot.status !== "ready") return snapshot;
-  const quickActions = new Map(deriveGradleQuickActions(snapshot).actions.map((action) => [action.taskId, action]));
-  return {
-    ...snapshot,
-    tasks: snapshot.tasks.map((task) => {
-      const quick = quickActions.get(task.id);
-      return quick ? withQuickAction(task, { kind: quick.kind, module: quick.module, variant: quick.variant }) : task;
-    }),
-  };
-}
 
 export function detectAndroidGradlePluginEvidence(
   context: SdkPluginMatchContext,

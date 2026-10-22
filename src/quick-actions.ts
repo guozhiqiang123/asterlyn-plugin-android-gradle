@@ -1,5 +1,5 @@
-import type { TaskProviderSnapshot, AndroidGradleQuickActionKind } from "./sdk-compat.ts";
-import { readQuickAction } from "./sdk-compat.ts";
+import type { TaskDescriptor, TaskProviderSnapshot, AndroidGradleQuickActionKind } from "./sdk-compat.ts";
+import { readQuickAction, withQuickAction } from "./sdk-compat.ts";
 
 
 
@@ -39,7 +39,7 @@ export type AndroidGradleQuickActionResolution =
   | { readonly status: "not-found" };
 
 const QUICK_ACTION_KINDS: readonly AndroidGradleQuickActionKind[] = ["assemble", "bundle", "install", "uninstall"];
-const TASK_PATTERN = /^(assemble|bundle|install|uninstall)([A-Z][A-Za-z0-9_.-]*)$/u;
+const QUICK_ACTION_VARIANT_PATTERN = /^[A-Z][A-Za-z0-9_.-]*$/u;
 
 /**
  * Derive only from the current ready projection. This function never invents a task or
@@ -108,15 +108,52 @@ export function gradleTaskArtifactHints(taskId: string): readonly string[] {
   return [`${modulePath}build/outputs/${parsed.kind === "bundle" ? "bundle" : "apk"}`];
 }
 
+export function gradleQuickActionForTaskId(taskId: string): Readonly<{
+  kind: AndroidGradleQuickActionKind;
+  module: string;
+  variant: string;
+}> | null {
+  return parseTaskId(taskId);
+}
+
+/** Rebuild the bounded, deterministic quick-action projection from task identities. */
+export function withGradleQuickActions(tasks: readonly TaskDescriptor[]): readonly TaskDescriptor[] {
+  const projected = [...tasks];
+  const kindCounts = new Map<string, number>();
+  let actions = 0;
+  for (let index = 0; index < projected.length; index += 1) {
+    if (actions >= ANDROID_GRADLE_QUICK_ACTION_LIMITS.maxActions) break;
+    const task = projected[index];
+    if (!task) continue;
+    const quick = gradleQuickActionForTaskId(task.id);
+    if (!quick) continue;
+    const count = kindCounts.get(quick.kind) ?? 0;
+    if (count >= ANDROID_GRADLE_QUICK_ACTION_LIMITS.maxActionsPerKind) continue;
+    projected[index] = withQuickAction(task, quick);
+    kindCounts.set(quick.kind, count + 1);
+    actions += 1;
+  }
+  return projected;
+}
+
 function parseTaskId(taskId: string): { readonly module: string; readonly kind: AndroidGradleQuickActionKind; readonly variant: string } | null {
   if (!taskId.startsWith(":")) return null;
   const lastColon = taskId.lastIndexOf(":");
   const module = lastColon <= 0 ? ":" : taskId.slice(0, lastColon);
-  if (module !== ":" && !/^:(?:[A-Za-z0-9_.-]+(?::[A-Za-z0-9_.-]+)*)$/u.test(module)) return null;
   const taskName = taskId.slice(lastColon + 1);
-  const match = taskName.match(TASK_PATTERN);
-  if (!match?.[1] || !match[2]) return null;
-  return { module, kind: match[1] as AndroidGradleQuickActionKind, variant: match[2] };
+  let kind: AndroidGradleQuickActionKind;
+  let prefixLength: number;
+  switch (taskName[0]) {
+    case "a": if (!taskName.startsWith("assemble")) return null; kind = "assemble"; prefixLength = 8; break;
+    case "b": if (!taskName.startsWith("bundle")) return null; kind = "bundle"; prefixLength = 6; break;
+    case "i": if (!taskName.startsWith("install")) return null; kind = "install"; prefixLength = 7; break;
+    case "u": if (!taskName.startsWith("uninstall")) return null; kind = "uninstall"; prefixLength = 9; break;
+    default: return null;
+  }
+  const variant = taskName.slice(prefixLength);
+  if (!QUICK_ACTION_VARIANT_PATTERN.test(variant) ||
+    module !== ":" && !/^:(?:[A-Za-z0-9_.-]+(?::[A-Za-z0-9_.-]+)*)$/u.test(module)) return null;
+  return { module, kind, variant };
 }
 
 function compareActions(left: AndroidGradleQuickAction, right: AndroidGradleQuickAction): number {
