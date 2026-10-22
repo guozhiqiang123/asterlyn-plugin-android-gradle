@@ -13,7 +13,7 @@ const staticManifest = JSON.parse(await readFile(new URL("../manifest.json", imp
 const sdkPackageJson = JSON.parse(await readFile(new URL("../node_modules/@asterlyn/plugin-sdk/package.json", import.meta.url), "utf8"));
 
 test("package, static manifest, and executable module share one identity", () => {
-  assert.equal(packageJson.version, "0.5.8");
+  assert.equal(packageJson.version, "0.5.10");
   assert.equal(packageJson.version, staticManifest.version);
   assert.equal(staticManifest.id, ANDROID_GRADLE_PLUGIN_ID);
   assert.equal(ANDROID_GRADLE_PLUGIN.id, staticManifest.id);
