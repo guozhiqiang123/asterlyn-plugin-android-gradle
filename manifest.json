@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
