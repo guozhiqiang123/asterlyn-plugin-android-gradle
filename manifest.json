@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "sdkMajor": 1,
   "id": "dev.asterlyn.android-gradle",
-  "version": "0.5.10",
+  "version": "0.6.0",
   "nameKey": "name",
   "descriptionKey": "description",
   "localization": {
@@ -114,17 +114,25 @@
       }
     }
   },
-  "settings": [{
-    "id": "taskPresentation",
-    "kind": "enum",
-    "labelKey": "settings.taskPresentation.label",
-    "descriptionKey": "settings.taskPresentation.description",
-    "defaultValue": "all-tasks-tree",
-    "options": [
-      { "value": "all-tasks-tree", "labelKey": "settings.taskPresentation.allTasksTree" },
-      { "value": "quick-actions-tree", "labelKey": "settings.taskPresentation.quickActionsTree" }
-    ]
-  }],
+  "settings": [
+    {
+      "id": "taskPresentation",
+      "kind": "enum",
+      "labelKey": "settings.taskPresentation.label",
+      "descriptionKey": "settings.taskPresentation.description",
+      "defaultValue": "all-tasks-tree",
+      "options": [
+        {
+          "value": "all-tasks-tree",
+          "labelKey": "settings.taskPresentation.allTasksTree"
+        },
+        {
+          "value": "quick-actions-tree",
+          "labelKey": "settings.taskPresentation.quickActionsTree"
+        }
+      ]
+    }
+  ],
   "taskAuthorization": {
     "workspaceTrust": {
       "id": "workspaceTrust",
@@ -141,25 +149,106 @@
     "titleKey": "name",
     "icon": "device",
     "views": [
-      { "id": "run", "labelKey": "panel.run" },
-      { "id": "tasks", "labelKey": "panel.tasks" }
+      {
+        "id": "run",
+        "labelKey": "panel.run"
+      },
+      {
+        "id": "tasks",
+        "labelKey": "panel.tasks"
+      }
     ],
     "defaultView": "tasks"
   },
   "hostOperations": [
-    { "id": "adb.devices" },
-    { "id": "android.apk.inspect" },
-    { "id": "android.adb.install" },
-    { "id": "android.adb.uninstall" },
-    { "id": "android.adb.launch" }
+    {
+      "id": "adb.devices"
+    },
+    {
+      "id": "android.apk.inspect"
+    },
+    {
+      "id": "android.adb.install"
+    },
+    {
+      "id": "android.adb.uninstall"
+    },
+    {
+      "id": "android.adb.launch"
+    }
   ],
-  "capabilities": ["workspaceCatalog", "tasks", "taskCache", "taskAuthorization", "processQueries", "toolOperations", "workspaceState", "executionTargets", "runConfigurations"],
-  "permissions": ["host.workspace.catalog.read", "host.tasks.discover", "host.tasks.execute", "host.tasks.cache", "host.process.query", "host.tool.execute", "host.workspace.state", "host.execution-targets.read"],
+  "capabilities": [
+    "workspaceCatalog",
+    "tasks",
+    "taskCache",
+    "taskAuthorization",
+    "processQueries",
+    "toolOperations",
+    "workspaceState",
+    "executionTargets",
+    "runConfigurations",
+    "workspaceModels"
+  ],
+  "permissions": [
+    "host.workspace.catalog.read",
+    "host.tasks.discover",
+    "host.tasks.execute",
+    "host.tasks.cache",
+    "host.process.query",
+    "host.tool.execute",
+    "host.workspace.state",
+    "host.execution-targets.read",
+    "host.workspace-models.execute"
+  ],
+  "modelProviders": [
+    {
+      "id": "android-gradle-model",
+      "schema": 1,
+      "program": {
+        "entry": "server-programs/model.mjs",
+        "tools": [
+          {
+            "id": "gradleJava",
+            "kind": "java",
+            "minimumMajor": 17,
+            "maximumMajorExclusive": 25
+          }
+        ],
+        "components": []
+      },
+      "inputGlobs": [
+        "local.properties",
+        "gradle.properties",
+        "gradle/wrapper/gradle-wrapper.properties",
+        "gradle/libs.versions.toml",
+        "**/*.gradle",
+        "**/*.gradle.kts",
+        "**/gradle-wrapper.properties",
+        "**/libs.versions.toml"
+      ],
+      "stateBindings": [
+        {
+          "key": "runConfiguration",
+          "contributionId": "android-run-configurations",
+          "pointer": "/selectedConfigurationId"
+        }
+      ]
+    }
+  ],
   "distribution": {
     "repository": "guozhiqiang123/asterlyn-plugin-android-gradle",
-    "runtime": { "protocol": 1, "entry": "runtime/plugin.js" },
-    "hostCompatibility": { "minimum": "0.1.15", "maximumExclusive": "0.2.0" },
-    "license": { "expression": "MIT", "file": "LICENSE" },
+    "runtime": {
+      "protocol": 1,
+      "entry": "runtime/plugin.js"
+    },
+    "hostCompatibility": {
+      "minimum": "0.1.22",
+      "maximumExclusive": "0.2.0"
+    },
+    "license": {
+      "expression": "MIT",
+      "file": "LICENSE"
+    },
     "integrity": {}
   }
 }

@@ -4,9 +4,12 @@ export interface AndroidModelSelection { readonly module: string; readonly varia
 export interface AndroidLanguageModule extends AndroidModelSelection {
   readonly directory: string;
   readonly sources: readonly string[];
+  readonly generatedSources: readonly string[];
   readonly bootClasspath: readonly string[];
   readonly compileClasspath: readonly string[];
-  readonly projectDependencies: readonly string[];
+  readonly sourceAttachments: readonly { readonly binary: string; readonly sources: readonly string[] }[];
+  readonly projectDependencies: readonly { readonly module: string; readonly variant: string }[];
+  readonly javaSourceTarget: string | null;
 }
 export interface AndroidLanguageModel {
   readonly schemaVersion: 1;
@@ -62,19 +65,32 @@ export function normalizeAgpV2LanguageModel(raw: unknown, metadata: {
   };
   const modules = entries.map(([id, value]): AndroidLanguageModule => {
     const item = object(value);
-    if (Object.keys(item).some((key) => !["directory", "variant", "sources", "bootClasspath", "compileClasspath", "projectDependencies", "unresolvedCount"].includes(key))) throw new Error("Unknown AGP model field");
+    if (Object.keys(item).some((key) => !["directory", "variant", "sources", "generatedSources", "bootClasspath", "compileClasspath", "sourceAttachments", "projectDependencies", "javaSourceTarget", "unresolvedCount"].includes(key))) throw new Error("Unknown AGP model field");
     if (typeof item.variant !== "string" || item.unresolvedCount !== 0) throw new Error("Incomplete AGP compile dependencies");
     const chosen = selection({ module: id, variant: item.variant });
     const directory = absolutePath(item.directory);
     const normalizedDirectory = directory.replaceAll("\\", "/"); const normalizedRoot = root.replaceAll("\\", "/").replace(/\/$/u, "");
     if (normalizedDirectory !== normalizedRoot && !normalizedDirectory.startsWith(`${normalizedRoot}/`)) throw new Error("AGP module is outside this build root");
-    if (!Array.isArray(item.projectDependencies) || item.projectDependencies.length > ANDROID_LANGUAGE_MODEL_LIMITS.modules || item.projectDependencies.some((id) => typeof id !== "string" || !MODULE.test(id))) throw new Error("Invalid AGP project dependency");
+    if (!Array.isArray(item.projectDependencies) || item.projectDependencies.length > ANDROID_LANGUAGE_MODEL_LIMITS.modules) throw new Error("Invalid AGP project dependency");
+    const projectDependencies = item.projectDependencies.map((dependency) => {
+      if (typeof dependency === "string") return { module: dependency, variant: item.variant as string };
+      const value = object(dependency);
+      if (typeof value.module !== "string" || !MODULE.test(value.module) || typeof value.variant !== "string" || !VARIANT.test(value.variant)) throw new Error("Invalid AGP project dependency");
+      return { module: value.module, variant: value.variant };
+    });
+    if (item.javaSourceTarget !== undefined && item.javaSourceTarget !== null && (typeof item.javaSourceTarget !== "string" || item.javaSourceTarget.length > 32)) throw new Error("Invalid Java source target");
+    const sourceAttachments = item.sourceAttachments === undefined ? [] : item.sourceAttachments;
+    if (!Array.isArray(sourceAttachments)) throw new Error("Invalid source attachments");
+    const attachments = sourceAttachments.map((attachment) => {
+      const value = object(attachment);
+      return { binary: absolutePath(value.binary), sources: list(value.sources) };
+    });
     const bootClasspath = list(item.bootClasspath);
     if (bootClasspath.length === 0) throw new Error("Android boot classpath is missing");
-    return Object.freeze({ ...chosen, directory, sources: list(item.sources), bootClasspath, compileClasspath: list(item.compileClasspath), projectDependencies: Object.freeze([...new Set(item.projectDependencies as string[])]) });
+    return Object.freeze({ ...chosen, directory, sources: list(item.sources), generatedSources: list(item.generatedSources ?? []), bootClasspath, compileClasspath: list(item.compileClasspath), sourceAttachments: Object.freeze(attachments), projectDependencies: Object.freeze(projectDependencies), javaSourceTarget: item.javaSourceTarget === undefined ? null : item.javaSourceTarget as string | null });
   });
   if (!modules.some((module) => module.module === requested.module && module.variant === requested.variant)) throw new Error("AGP result does not match the selected module and variant");
   const ids = new Set(modules.map((module) => module.module));
-  if (modules.some((module) => module.projectDependencies.some((id) => !ids.has(id)))) throw new Error("AGP dependency module model is missing");
+  if (modules.some((module) => module.projectDependencies.some(({module: id}) => !ids.has(id)))) throw new Error("AGP dependency module model is missing");
   return Object.freeze({ schemaVersion: 1, origin: "agp-v2", buildRoot: root, gradleVersion: version(metadata.gradleVersion), agpVersion: version(metadata.agpVersion), selection: requested, modules: Object.freeze(modules) });
 }
