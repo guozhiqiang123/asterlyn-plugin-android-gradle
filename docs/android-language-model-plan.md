@@ -25,3 +25,13 @@ LSP 插件整体启用时，本插件必须保持启用，不能关闭/卸载或
 模型和任务目录有独立缓存 schema，复用构建输入监测和选择意图。默认不构建 APK、不运行生成/处理器任务；离线也不被描述成隔离环境。无全局停止 Gradle daemon；只取消所属工作。不同工作区/输入指纹/选择/工具身份模型不混用，陈旧结果不可覆盖新模型。
 
 每步记录功能、负向测试、耗时、内存范围、包影响和已知限制。未获得模型与后端语义成功证据，不声称 Android LSP 可用。SDK 精确 vendor 并标明开发制品；不发布远端。
+
+## C3a 实施证据（2026-10-27）
+
+插件已拥有 `src/language-model.ts` 的有界规范化契约和 `tools/agp-model` 的独立 V2 开发探针。
+boostCleaner `:common/cleanx100Debug` 返回 8 个源码根、1 个 boot classpath、56 个存在的编译依赖，未解析为 0；规范化模型 9,952 B、5,073 ms。
+原型已从模糊的长时失败收敛到具名阶段，并证实选择必须使用实际变体名，不能假定库只有 `debug` 变体。
+4 项契约回归通过，插件完整 verify 为 67 项测试通过。原有 runtime/manifest/版本未变，开发探针和 JVM 资源没有打入插件包。
+C2b/C2c 原生交付通道、完整模块图/生成源码及 C4 后端消费仍待实施，不提供 Android 语言 profile。
+
+Re-run with the committed-source probe: 7,997 ms, 9,952 bytes, identical module/path/artifact counts. These two samples are not a performance distribution.

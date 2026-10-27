@@ -64,3 +64,5 @@ export {
   type AndroidGradleQuickActions,
   type AndroidGradleQuickActionSelection,
 } from "./quick-actions.ts";
+
+export { normalizeAgpV2LanguageModel, ANDROID_LANGUAGE_MODEL_LIMITS, type AndroidLanguageModel, type AndroidLanguageModule, type AndroidModelSelection } from "./language-model.ts";
