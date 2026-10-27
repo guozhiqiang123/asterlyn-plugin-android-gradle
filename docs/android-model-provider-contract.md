@@ -63,6 +63,12 @@ the form `{"stage":"model","count":3,"durationMs":1200}`. Java/Gradle output is 
 The provider uses a private Gradle user home, may read the user's Gradle cache, has a five-minute
 model deadline, and on SIGTERM cancels/terminates only the Gradle process it started.
 
+Model sync must also pass the published AGP `PROPERTY_BUILD_MODEL_V2_ONLY`
+(`android.injected.build.model.v2=true`), in addition to `PROPERTY_INVOKED_FROM_IDE`. Without it,
+unrelated missing test dependencies can abort the entire main-source import and trigger irrelevant
+online repository/TLS failures. The model remains offline and rejects nonzero main-artifact
+unresolved counts; selecting IDE model mode does not grant incomplete main graphs authority.
+
 The implementation uses Gradle 8.13 Tooling API (Apache-2.0), AGP builder-model 8.13.2
 (Apache-2.0), Gson 2.10 (Apache-2.0), and SLF4J API 1.7.36 (MIT). Exact local artifact receipts
 and SHA-256 values remain in `tools/agp-model/README.md`; no dependency is vendored by this
