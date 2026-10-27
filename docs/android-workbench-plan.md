@@ -188,3 +188,7 @@ produces one `SINGLE` APK at
 `SuperBoost/build/outputs/apk/superboost/debug/SuperBoost-superboost-debug.apk`. The corrected
 resolver accepts that artifact and still rejects missing, duplicate, split, escaped, or differently
 named metadata.
+
+## Android language model follow-up (2026-10-27)
+
+[Android language-model plan](android-language-model-plan.md) assigns AGP model extraction and compatibility to this plugin, consumed by the LSP plugin through host-governed services. LSP enablement requires this plugin to remain enabled; the host owns the generic dependency lock. Enabling this plugin does not automatically start JVM analysis or model extraction.
