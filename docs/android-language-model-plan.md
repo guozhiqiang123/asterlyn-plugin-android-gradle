@@ -35,3 +35,18 @@ boostCleaner `:common/cleanx100Debug` 返回 8 个源码根、1 个 boot classpa
 C2b/C2c 原生交付通道、完整模块图/生成源码及 C4 后端消费仍待实施，不提供 Android 语言 profile。
 
 Re-run with the committed-source probe: 7,997 ms, 9,952 bytes, identical module/path/artifact counts. These two samples are not a performance distribution.
+
+## C3b fixed model provider (2026-10-27)
+
+The package now declares `android-gradle-model` schema 1 under `workspaceModels` and ships the
+fixed `server-programs/model.mjs` entry plus its Java Tooling API action source. The provider accepts
+the host's `protocolVersion:1` request (`tools.gradleJava`, verified component roots, run state and
+input digest) rather than arbitrary Gradle/JAR paths, and parses
+the selected `android-run::<module>:install<Variant>` state, resolves actual AGP project variants
+through `ProjectInfo.buildType` and `productFlavors`, traverses Android project dependencies, and
+keeps external JARs/source attachments separate from project outputs. It rejects pure JVM and
+composite dependencies, uses a private Gradle home, bounds input/model/output and cancellation,
+and emits only structured stage records on stderr. Local malformed-input, model normalization,
+TypeScript check, release build and package inspection checks pass. Full app extraction remains
+credential-dependent; the boost workspace could not be run in this environment without its private
+Maven credentials, so this does not claim complete Android LSP semantic acceptance.
