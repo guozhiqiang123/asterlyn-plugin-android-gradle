@@ -73,3 +73,24 @@ The implementation uses Gradle 8.13 Tooling API (Apache-2.0), AGP builder-model 
 (Apache-2.0), Gson 2.10 (Apache-2.0), and SLF4J API 1.7.36 (MIT). Exact local artifact receipts
 and SHA-256 values remain in `tools/agp-model/README.md`; no dependency is vendored by this
 provider release.
+
+## Refresh-stable model selection — 2026-10-29
+
+A task-list refresh must not clear the selected module/variant while its retained
+task entries still identify the same known run configuration. The model provider
+binds to `selectedConfigurationId`, so a temporary null during loading used to
+revoke the live LSP model and trigger another full import. Preserve configuration
+identity and metadata from the retained runnable task projection during loading.
+Keep the snapshot's loading status and mark descriptors incomplete;
+Run derivation/execution continues to require a ready task projection. Failed or
+unavailable discovery and a fresh empty scan still have no selected configuration.
+A completed scan that removes or
+changes the selected variant publishes the new authoritative selection normally.
+Source/build input fingerprints and native authority continue to invalidate models
+independently; this is not permission to reuse a model after a build-input change.
+
+The 0.6.2 correction is validated with retained-selection loading and failure-revocation cases,
+fresh-empty and completed-selection-change cases, package/host snapshot validation,
+and real-project refresh after language readiness. No task is fabricated or launched
+to keep an old selection alive. Cold language preparation and cache recovery remain
+separate limits recorded by the host's real-project acceptance document.

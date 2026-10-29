@@ -70,6 +70,30 @@ test("restores a valid selected configuration and falls back deterministically",
   });
 });
 
+test("refresh loading retains model selection without enabling Run and failure clears it", () => {
+  const tasks = [task(":app:assembleDebug"), task(":app:installDebug"), task(":demo:assembleRelease"), task(":demo:installRelease")];
+  const selected = "android-run::demo:installRelease";
+  const baseline = androidRunConfigurationSnapshot(ready(tasks), selected);
+  for (const status of ["loading"]) {
+    const transient = { status, tasks, ...(status === "error" ? { error: "discovery failed" } : {}) };
+    const snapshot = androidRunConfigurationSnapshot(transient, selected);
+    assert.equal(snapshot.status, status);
+    assert.equal(snapshot.selectedConfigurationId, baseline.selectedConfigurationId);
+    assert.deepEqual(snapshot.configurations.map(({ id, metadata }) => ({ id, metadata })), baseline.configurations.map(({ id, metadata }) => ({ id, metadata })));
+    assert.ok(snapshot.configurations.every(configuration => configuration.status === "incomplete"));
+    assert.equal(deriveAndroidRunConfigurations(transient).length, 0, "Run must continue to require current ready task evidence");
+  }
+  assert.equal(androidRunConfigurationSnapshot({ status: "error", tasks: tasks.map(value => ({ ...value, runnable: false })) }, selected).selectedConfigurationId, null, "failed discovery remains fail-closed even with retained task labels");
+  const replacement = androidRunConfigurationSnapshot(ready(tasks.slice(0, 2)), selected);
+  assert.equal(replacement.selectedConfigurationId, "android-run::app:installDebug", "completed authoritative changes must still replace the model selection");
+  for (const status of ["loading", "error"]) {
+    const empty = androidRunConfigurationSnapshot({ status, tasks: [] }, selected);
+    assert.equal(empty.selectedConfigurationId, null);
+    assert.deepEqual(empty.configurations, []);
+  }
+  assert.equal(androidRunConfigurationSnapshot({ status: "unavailable", tasks }, selected).selectedConfigurationId, null, "revoked task authority must not retain model selection");
+});
+
 test("staged Run resolves AGP output metadata and installs on the selected device", async () => {
   const applied = [];
   const buildResults = [];

@@ -68,15 +68,19 @@ export function androidRunConfigurationSnapshot(
   tasks: GradleTaskDiscoveryResult,
   preferredConfigurationId: string | null,
 ): SdkRunConfigurationProviderSnapshot {
-  if (tasks.status === "loading") return { status: "loading", configurations: [], selectedConfigurationId: null };
-  if (tasks.status === "error") {
-    return { status: "error", configurations: [], selectedConfigurationId: null, error: tasks.error ?? "Gradle task discovery failed." };
-  }
-  const configurations = deriveAndroidRunConfigurations(tasks);
+  if (tasks.status === "unavailable") return { status: "ready", configurations: [], selectedConfigurationId: null };
+  if (tasks.status === "error") return { status: "error", configurations: [], selectedConfigurationId: null, error: tasks.error ?? "Gradle task discovery failed." };
+  // A refresh retains its previous task entries. Keep their model-selection identity
+  // while Run remains unavailable; a transient null would revoke an unrelated LSP model.
+  const configurations = deriveAndroidRunConfigurations(tasks.status === "ready" ? tasks : { ...tasks, status: "ready" });
   const selected = configurations.some((configuration) => configuration.id === preferredConfigurationId)
     ? preferredConfigurationId
     : configurations[0]?.id ?? null;
-  return { status: "ready", configurations: configurations.map((configuration) => configuration.descriptor), selectedConfigurationId: selected };
+  return {
+    status: tasks.status,
+    configurations: configurations.map((configuration) => tasks.status === "ready" ? configuration.descriptor : { ...configuration.descriptor, status: "incomplete" as const }),
+    selectedConfigurationId: selected,
+  };
 }
 
 /** Build the value-only callbacks used by the host's supervised Run state machine. */
