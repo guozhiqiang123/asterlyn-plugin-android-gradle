@@ -94,3 +94,15 @@ fresh-empty and completed-selection-change cases, package/host snapshot validati
 and real-project refresh after language readiness. No task is fabricated or launched
 to keep an old selection alive. Cold language preparation and cache recovery remain
 separate limits recorded by the host's real-project acceptance document.
+
+Native acceptance of the exact 0.6.2 package completed with installed host
+`8bad30c` and LSP 0.3.6 on boostCleaner. After language readiness, Refresh tasks
+retains 13,676 entries during loading and returns to ready. The same session's
+113.8-second observation records no new model acquisition, reindex, language
+state change, helper termination or quarantine. Actual Command+left-click still
+opens `AppAds.kt:26`'s caller at `CleanApplication.kt:69` and resolves its line 27
+call to `AppAdsRuntime.kt:43`. Business sources remain unchanged and Git-clean.
+The host's `docs/engineering/2026-10-27-boostcleaner-lsp-recovery.md` records exact
+package/install identities, native event sequences, resource samples and limits;
+local `refresh-stability.json` contains the bounded observation receipt. This
+does not extend valid-model reuse to failed scans or changed build inputs.
