@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: guozhiqiang123/asterlyn
-          ref: v0.1.15
+          ref: v0.1.23
           path: host
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -42,7 +42,7 @@ jobs:
           test "$#" -eq 1
           ASTERLYN_ANDROID_PLUGIN_PACKAGE="$(realpath "$1")" \
           ASTERLYN_ANDROID_PLUGIN_VERSION="$(node -p "require('./package.json').version")" \
-          ASTERLYN_HOST_VERSION="0.1.15" \
+          ASTERLYN_HOST_VERSION="0.1.23" \
           cargo test --manifest-path host/Cargo.toml -p asterlyn-plugin-host --test android_release_parity -- --ignored
       - name: Inspect with the host validator
         env:
