@@ -21,5 +21,5 @@ test("manifest admits the fixed Android Gradle model provider", () => {
 
 test("provider rejects malformed input without writing model data", async () => {
   const result = await run("{\"schemaVersion\":1}");
-  assert.equal(result.code, 1); assert.equal(result.stdout, ""); assert.match(result.stderr, /^\{"stage":"error","count":0,"durationMs":\d+(?:,"causeChain":"[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)*")?\}\n$/u);
+  assert.equal(result.code, 1); assert.equal(result.stdout, ""); const event=JSON.parse(result.stderr);assert.deepEqual(Object.keys(event).sort(),["count","durationMs","errorCode","stage"]);assert.equal(event.stage,"error");assert.equal(event.errorCode,"request-schema");assert.equal(event.count,0);assert.ok(Number.isSafeInteger(event.durationMs));
 });

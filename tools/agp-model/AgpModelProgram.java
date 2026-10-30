@@ -13,7 +13,7 @@ import org.gradle.tooling.model.gradle.*;
 
 /** Production model extraction action. It emits only one JSON model on stdout. */
 public final class AgpModelProgram {
-    private static final class Selection { final String module; final String variant; Selection(String m, String v) { module = m; variant = v; } }
+    private static final class Selection implements Serializable { final String module; final String variant; Selection(String m, String v) { module = m; variant = v; } }
     private static final class Action implements BuildAction<Map<String, Object>>, Serializable {
         private final String module; private final String selectedVariant;
         Action(String module, String selectedVariant) { this.module = module; this.selectedVariant = selectedVariant; }
@@ -21,18 +21,19 @@ public final class AgpModelProgram {
             if(!controller.getBuildModel().getIncludedBuilds().isEmpty())throw new IllegalArgumentException("composite-builds-unsupported");
             Map<String, BasicGradleProject> projects = new LinkedHashMap<>();
             for (BasicGradleProject project : controller.getBuildModel().getProjects()) projects.put(project.getPath(), project);
-            BasicGradleProject selectedProject = projects.get(module);
-            if (selectedProject == null) throw new IllegalArgumentException("selected-module-model-missing");
+            if (!module.isEmpty() && !projects.containsKey(module)) throw new IllegalArgumentException("selected-module-model-missing");
             Map<String, BasicAndroidProject> android = new LinkedHashMap<>();
             for (BasicGradleProject project : projects.values()) {
                 try { android.put(project.getPath(), controller.getModel(project, BasicAndroidProject.class)); }
                 catch (RuntimeException error) { if (project.getPath().equals(module)) throw error; /* pure JVM projects are rejected only when reached */ }
             }
-            BasicAndroidProject selectedAndroid = android.get(module);
+            String selectedModule = module;
+            if (selectedModule.isEmpty()) selectedModule = android.entrySet().stream().filter(entry -> entry.getValue().getProjectType() == ProjectType.APPLICATION).map(Map.Entry::getKey).sorted(Comparator.comparing((String path) -> !path.equals(":app")).thenComparing(path -> path)).findFirst().orElseThrow(() -> new IllegalArgumentException("selected-module-model-missing"));
+            BasicAndroidProject selectedAndroid = android.get(selectedModule);
             if (selectedAndroid == null || selectedAndroid.getProjectType() == ProjectType.LIBRARY) throw new IllegalArgumentException("selected-project-is-not-android-application:" + (selectedAndroid == null ? "null" : selectedAndroid.getProjectType()));
-            BasicVariant selected = findVariant(selectedAndroid, selectedVariant);
-            Map<String, String> variants = new LinkedHashMap<>(); variants.put(module, selected.getName());
-            ArrayDeque<String> queue = new ArrayDeque<>(); queue.add(module);
+            BasicVariant selected = selectedVariant.isEmpty() ? selectedAndroid.getVariants().stream().sorted(Comparator.comparing((BasicVariant variant) -> !"debug".equals(variant.getBuildType())).thenComparing(BasicVariant::getName)).findFirst().orElseThrow(() -> new IllegalArgumentException("actual-agp-variant-missing")) : findVariant(selectedAndroid, selectedVariant);
+            Map<String, String> variants = new LinkedHashMap<>(); variants.put(selectedModule, selected.getName());
+            ArrayDeque<String> queue = new ArrayDeque<>(); queue.add(selectedModule);
             Map<String, Object> result = new LinkedHashMap<>();
             while (!queue.isEmpty()) {
                 String path = queue.removeFirst();
@@ -45,7 +46,7 @@ public final class AgpModelProgram {
                 Map<String, Object> model = moduleModel(controller, projects.get(path), basic, variant, variants, dependencies);
                 result.put(path, model);
             }
-            return result;
+            Map<String,Object> output=new LinkedHashMap<>();output.put("projects",result);output.put("selection",new Selection(selectedModule,selected.getName()));return output;
         }
         private static VariantDependencies dependencies(BuildController c, BasicGradleProject p, String variant) {
             return c.getModel(p, VariantDependencies.class, ModelBuilderParameter.class, parameter -> {
@@ -98,6 +99,39 @@ public final class AgpModelProgram {
         private static List<String> existing(Collection<File> files) { return files.stream().filter(File::isFile).map(File::getAbsolutePath).toList(); }
         private static String javaTarget(BuildController controller, BasicGradleProject project) { AndroidProject android = controller.getModel(project, AndroidProject.class); JavaCompileOptions options = android == null ? null : android.getJavaCompileOptions(); if (options == null) return null; String source = options.getSourceCompatibility(); String target = options.getTargetCompatibility(); return target != null && !target.isBlank() ? target : source; }
     }
+    private static String failureCode(Throwable error) {
+        String fallback = "model-unavailable";
+        Throwable cause = error;
+        for (int depth = 0; cause != null && depth < 8; depth++, cause = cause.getCause()) {
+            String type = cause.getClass().getName();
+            String message = Objects.toString(cause.getMessage(), "");
+            if (type.contains("SSLHandshakeException") || type.contains("CertPathBuilderException")) return "dependency-tls";
+            if (type.contains("UnknownHostException")) return "dependency-dns";
+            if (type.contains("ModuleVersionNotFoundException") || type.contains("ArtifactResolveException")) return "dependency-unavailable";
+            if (type.contains("UnsupportedMethodException") || type.contains("UnknownModelException")) return "gradle-model-incompatible";
+            if (message.contains("SDK location not found") || message.contains("sdk.dir")) return "android-sdk-missing";
+            if (message.contains("nexusUsername") || message.contains("nexusPassword")) return "repository-credentials-missing";
+            if (message.contains("actual-agp-variant-missing") || message.contains("dependency-actual-variant")) return "model-selection-unavailable";
+            if (message.contains("Minimum supported Gradle version")) return "gradle-version-incompatible";
+            if (message.contains("Android Gradle plugin requires Java") || message.contains("Unsupported class file major")) return "gradle-toolchain-incompatible";
+            if (type.contains("ProjectConfigurationException") || type.contains("GradleScriptException")) fallback = "project-configuration-failed";
+        }
+        return fallback;
+    }
+    private static void reportFailure(Throwable error) {
+        StringBuilder chain = new StringBuilder("MODEL_FAILURE"); boolean located = false;
+        Throwable current = error;
+        for (int depth = 0; current != null && depth < 8; depth++, current = current.getCause()) {
+            chain.append(' ').append(current.getClass().getName());
+            if (!located) for (StackTraceElement frame : current.getStackTrace()) {
+                String file = frame.getFileName();
+                if (file != null && file.matches("[A-Za-z0-9._-]+\\.gradle(?:\\.kts)?") && frame.getLineNumber() > 0) {
+                    System.err.println("MODEL_LOCATION " + file + ":" + frame.getLineNumber()); located = true; break;
+                }
+            }
+        }
+        System.err.println(chain); System.err.println("MODEL_CODE " + failureCode(error));
+    }
     public static void main(String[] args) throws Exception {
         if (args.length != 6) throw new IllegalArgumentException("expected-six-arguments");
         GradleConnector connector = GradleConnector.newConnector().forProjectDirectory(new File(args[0])).useGradleUserHomeDir(new File(args[1]));
@@ -105,7 +139,7 @@ public final class AgpModelProgram {
         Thread hook = new Thread(cancellation::cancel); Runtime.getRuntime().addShutdownHook(hook);
         Map<String, Object> result;
         PrintStream jsonOutput = System.out;
-        try (ProjectConnection connection = connector.connect()) { List<String> arguments = new ArrayList<>(List.of("--offline", "-Dorg.gradle.daemon=false", "-Dorg.gradle.configureondemand=false", "-P" + PROPERTY_INVOKED_FROM_IDE + "=true", "-P" + PROPERTY_BUILD_MODEL_V2_ONLY + "=true")); if (System.getenv("ASTERLYN_NEXUS_USERNAME") != null) arguments.add("-PnexusUsername=" + System.getenv("ASTERLYN_NEXUS_USERNAME")); if (System.getenv("ASTERLYN_NEXUS_PASSWORD") != null) arguments.add("-PnexusPassword=" + System.getenv("ASTERLYN_NEXUS_PASSWORD")); try { System.setOut(new PrintStream(OutputStream.nullOutputStream())); result = connection.action(new Action(args[4], args[5])).withCancellationToken(cancellation.token()).setJavaHome(new File(args[2])).withArguments(arguments).setStandardOutput(OutputStream.nullOutputStream()).setStandardError(OutputStream.nullOutputStream()).run(); } catch (RuntimeException error) { StringBuilder chain = new StringBuilder("MODEL_FAILURE"); Throwable current = error; for (int depth = 0; current != null && depth < 8; depth++, current = current.getCause()) chain.append(' ').append(current.getClass().getName()); System.err.println(chain); throw error; } finally { System.setOut(jsonOutput); } }
+        try (ProjectConnection connection = connector.connect()) { List<String> arguments = new ArrayList<>(List.of("--offline", "-Dorg.gradle.daemon=false", "-Dorg.gradle.configureondemand=false", "-P" + PROPERTY_INVOKED_FROM_IDE + "=true", "-P" + PROPERTY_BUILD_MODEL_V2_ONLY + "=true")); if (System.getenv("ASTERLYN_NEXUS_USERNAME") != null) arguments.add("-PnexusUsername=" + System.getenv("ASTERLYN_NEXUS_USERNAME")); if (System.getenv("ASTERLYN_NEXUS_PASSWORD") != null) arguments.add("-PnexusPassword=" + System.getenv("ASTERLYN_NEXUS_PASSWORD")); try { System.setOut(new PrintStream(OutputStream.nullOutputStream())); result = connection.action(new Action(args[4], args[5])).withCancellationToken(cancellation.token()).setJavaHome(new File(args[2])).withArguments(arguments).setStandardOutput(OutputStream.nullOutputStream()).setStandardError(OutputStream.nullOutputStream()).run(); } catch (RuntimeException error) { reportFailure(error); throw new IllegalStateException(failureCode(error)); } finally { System.setOut(jsonOutput); } }
         System.out.println(new Gson().toJson(result));
         try { Runtime.getRuntime().removeShutdownHook(hook); } catch (IllegalStateException ignored) {} connector.disconnect();
     }
