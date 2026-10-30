@@ -4,3 +4,7 @@
 CI now validates admission and isolated activation against v0.1.24, rather than obsolete v0.1.15.
 SDK 1.14.0 is the exact canonical vendored artifact released by that host. Plugin/runtime bytes are
 unchanged by this workflow update. This Release supplies the declared LSP 0.3.11 dependency.
+
+The first Linux rehearsal ran two resource-sensitive parity cases concurrently against debug Boa
+helpers and exceeded the activation budget. Release verification now uses the production-optimized
+helper (`--release --locked`) and serial parity cases. Production limits and assertions are unchanged.
